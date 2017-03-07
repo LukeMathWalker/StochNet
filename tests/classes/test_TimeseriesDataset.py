@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import os
-from StochNet.components.classes.TimeSeriesDataset import TimeSeriesDataset
+from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 
 
 class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
@@ -21,10 +21,11 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
 
 class Test_TimeSeriesDataset_with_Invalid_Input(unittest.TestCase):
 
-        def test_init_with_invalid_address(self):
-            invalid_dataset_address = 'data.npy'
-            with self.assertRaises(SystemError):
-                TimeSeriesDataset(invalid_dataset_address)
+    def test_init_with_invalid_address(self):
+        invalid_dataset_address = 'data.npy'
+        with self.assertRaises(FileNotFoundError):
+            TimeSeriesDataset(invalid_dataset_address)
+
 
 if __name__ == '__main__':
     unittest.main()

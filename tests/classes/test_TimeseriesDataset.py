@@ -16,13 +16,15 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
     def test_init_with_valid_address(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address)
 
-    # def test_init_with_invalid_address(self):
-    #     dataset_address = 'data.npy'
-    #     timeseries_dataset = TimeSeriesDataset(dataset_address)
-
     def tearDown(self):
         os.remove(self.dataset_address)
 
+class Test_TimeSeriesDataset_with_Invalid_Input(unittest.TestCase):
+
+        def test_init_with_invalid_address(self):
+            invalid_dataset_address = 'data.npy'
+            with self.assertRaises(SystemError):
+                TimeSeriesDataset(invalid_dataset_address)
 
 if __name__ == '__main__':
     unittest.main()

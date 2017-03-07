@@ -1,32 +1,42 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from stochnet.classes.Errors import ShapeError
 import numpy as np
 
 class TimeSeriesDataset:
 
-    def __init__(self, dataset_address):
+    def __init__(self, dataset_address, with_timestamps=True):
         # data: [n_trajectories, n_timesteps, nb_features]
-        # data[:,:,0] contains time instants, which are not properly a feature
+        # data[:,:,0] contains the timestamps if with_timestamps is True
         with open(dataset_address, 'rb') as data_file:
             self.data = np.load(data_file)
-        self.nb_trajectories = self.data.shape[0]
-        self.nb_timesteps = self.data.shape[1]
-        self.nb_features = self.data.shape[2]
+        self.memorize_dataset_shape()
         self.rescaled = False
+        self.with_timestamps = with_timestamps
+
+    def memorize_dataset_shape(self):
+        try:
+            self.nb_trajectories = self.data.shape[0]
+            self.nb_timesteps = self.data.shape[1]
+            self.nb_features = self.data.shape[2]
+        except:
+            raise ShapeError('The dataset is not properly formatted.\n We expect the following shape: [nb_trajectories, nb_timesteps, nb_features]')
 
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
                               must_be_rescaled=True):
         if keep_timestamps is False:
-            self.remove_timestamps(self)
+            self.remove_timestamps()
 
         if must_be_rescaled is True:
-            self.rescale(self)
+            self.rescale()
 
-        self.explode_into_training_pieces(self, nb_past_timesteps)
+        self.explode_into_training_pieces(nb_past_timesteps)
 
     def remove_timestamps(self):
-        self.data = self.data[..., 1:]
-        self.nb_features = self.nb_features-1
+        if self.with_timestamps is True:
+            self.data = self.data[..., 1:]
+            self.nb_features = self.nb_features-1
+            self.with_timestamps = False
 
     def rescale(self):
         self.scaler = StandardScaler()

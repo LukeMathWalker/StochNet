@@ -18,7 +18,7 @@ class CategoricalOutputLayer:
     def get_tensor_random_variable(self, NN_prediction):
         # NN_prediction is expected to be of the following shape:
         # [batch_size, self.number_of_classes]
-        return Categorical(NN_prediction)
+        return Categorical(NN_prediction).distribution_obj
 
     def loss_function(self, y_true, y_pred):
         return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
@@ -45,20 +45,14 @@ class MultivariateNormalCholeskyOutputLayer:
         cholesky_diag = tf.slice(NN_prediction, [0, self.sample_space_dimension], [-1, self.sample_space_dimension])
         cholesky_sub_diag = tf.slice(NN_prediction, [0, 2 * self.sample_space_dimension], [-1, self.number_of_sub_diag_entries])
         cholesky = self.batch_to_lower_triangular_matrix(cholesky_diag, cholesky_sub_diag)
-        return MultivariateNormalCholesky(mu, cholesky)
+        return MultivariateNormalCholesky(mu, cholesky).distribution_obj
 
     def batch_to_lower_triangular_matrix(self, batch_diag, batch_sub_diag):
         # batch_diag, batch_sub_diag: [batch_size, *]
         # sltm = strictly_lower_triangular_matrix
         # ltm = lower_triangular_matrix
-        print("Batch_diag shape")
-        print(batch_diag.shape)
         batch_sltm = tf.map_fn(self.to_strictly_lower_triangular_matrix, batch_sub_diag)
-        print("Batch_sltm shape")
-        print(batch_sltm.shape)
         batch_diagonal_matrix = tf.map_fn(self.to_diagonal_matrix, batch_diag)
-        print("Batch_sltm shape")
-        print(batch_diagonal_matrix.shape)
         batch_ltm = batch_sltm + batch_diagonal_matrix
         return batch_ltm
 
@@ -113,7 +107,7 @@ class MixtureOutputLayer:
             component_random_variable = component.get_tensor_random_variable(component_predictions)
             components_random_variable.append(component_random_variable)
             start_slicing_index += component.number_of_output_neurons
-        return Mixture(categorical_random_variable, components_random_variable)
+        return Mixture(categorical_random_variable, components_random_variable).distribution_obj
 
     def loss_function(self, y_true, y_pred):
         return -self.get_tensor_random_variable(y_pred).log_prob(y_true)

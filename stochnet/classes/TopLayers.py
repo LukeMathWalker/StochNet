@@ -42,8 +42,8 @@ class MultivariateNormalCholeskyOutputLayer:
         # by add_layer_on_top. In particular, it has to be of the following shape:
         # [batch_size, self.number_of_output_neurons]
         mu = tf.slice(NN_prediction, [0, 0], [-1, self.sample_space_dimension])
-        cholesky_diag = tf.slice(NN_prediction, [0, self.sample_space_dimension], [-1, 2 * self.sample_space_dimension])
-        cholesky_sub_diag = tf.slice(NN_prediction, [0, 2 * self.sample_space_dimension], [-1, -1])
+        cholesky_diag = tf.slice(NN_prediction, [0, self.sample_space_dimension], [-1, self.sample_space_dimension])
+        cholesky_sub_diag = tf.slice(NN_prediction, [0, 2 * self.sample_space_dimension], [-1, self.number_of_sub_diag_entries])
         cholesky = self.batch_to_lower_triangular_matrix(cholesky_diag, cholesky_sub_diag)
         return MultivariateNormalCholesky(mu, cholesky)
 
@@ -109,7 +109,7 @@ class MixtureOutputLayer:
         components_random_variable = []
         start_slicing_index = self.categorical.number_of_output_neurons
         for component in self.components:
-            component_predictions = tf.slice(NN_prediction, [0, start_slicing_index], [-1, start_slicing_index + component.number_of_output_neurons])
+            component_predictions = tf.slice(NN_prediction, [0, start_slicing_index], [-1, component.number_of_output_neurons])
             component_random_variable = component.get_tensor_random_variable(component_predictions)
             components_random_variable.append(component_random_variable)
             start_slicing_index += component.number_of_output_neurons

@@ -56,7 +56,6 @@ class TimeSeriesDataset:
         X_data, y_data = [], []
         for trajectory in range(self.nb_trajectories):
             for oldest_timestep in range(self.nb_timesteps - nb_past_timesteps):
-                print(self.data.shape)
                 X_placeholder = self.data[trajectory, oldest_timestep:(oldest_timestep + nb_past_timesteps), :]
                 y_placeholder = self.data[trajectory, oldest_timestep + nb_past_timesteps, :]
                 X_data.append(X_placeholder)

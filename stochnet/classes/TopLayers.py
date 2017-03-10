@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from keras.layers import Dense, merge
+from keras.layers import Dense, merge, Merge
 from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, Mixture
 
 
@@ -35,7 +35,7 @@ class MultivariateNormalCholeskyOutputLayer:
         mu = Dense(self.sample_space_dimension, activation=None)
         chol_diag = Dense(self.sample_space_dimension, activation=tf.exp)
         chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)
-        return merge([mu, chol_diag, chol_sub_diag], mode='concat')
+        return Merge([mu, chol_diag, chol_sub_diag], mode='concat')
 
     def get_tensor_random_variable(self, NN_prediction):
         # NN_prediction is expected to come from a layer such as the one produced

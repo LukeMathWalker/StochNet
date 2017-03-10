@@ -25,6 +25,7 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
         nb_features = timeseries_dataset.nb_features
         timeseries_dataset.remove_timestamps()
         self.assertEqual(nb_features - 1, timeseries_dataset.nb_features)
+        self.assertEqual(len(timeseries_dataset.data.shape), 3)
 
     def test_remove_timestamps_iterated(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address, with_timestamps=False)
@@ -32,6 +33,7 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
         for j in range(5):
             timeseries_dataset.remove_timestamps()
         self.assertEqual(nb_features, timeseries_dataset.nb_features)
+        self.assertEqual(len(self.data.shape), 3)
 
     def test_if_scaler_is_fitted(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address)
@@ -39,6 +41,7 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
         scaler = timeseries_dataset.scaler
         self.assertTrue(hasattr(scaler, 'mean_'))
         self.assertTrue(hasattr(scaler, 'scale_'))
+        self.assertEqual(len(self.data.shape), 3)
 
     def test_if_the_output_of_explode_into_training_pieces_has_correct_shape(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address)

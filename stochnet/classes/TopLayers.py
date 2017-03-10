@@ -91,7 +91,7 @@ class MixtureOutputLayer:
         # list comprehension preserves the order of the original list.
         categorical_layer = self.categorical.get_layer
         components_layers = [component.get_layer for component in self.components]
-        mixture_layers = categorical_layer + components_layers
+        mixture_layers = [categorical_layer] + components_layers
         return merge(mixture_layers, mode='concat')
 
     def get_tensor_random_variable(self, NN_prediction):

@@ -20,6 +20,9 @@ class CategoricalOutputLayer:
         # [batch_size, self.number_of_classes]
         return Categorical(NN_prediction)
 
+    def loss_function(self, y_true, y_pred):
+        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+
 
 class MultivariateNormalCholeskyOutputLayer:
 
@@ -67,6 +70,9 @@ class MultivariateNormalCholeskyOutputLayer:
     def to_diagonal_matrix(self, diag):
         return tf.diag(diag)
 
+    def loss_function(self, y_true, y_pred):
+        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+
 
 class MixtureOutputLayer:
 
@@ -102,3 +108,6 @@ class MixtureOutputLayer:
             components_random_variable.append(component_random_variable)
             start_slicing_index += component.number_of_output_neurons
         return Mixture(categorical_random_variable, components_random_variable)
+
+    def loss_function(self, y_true, y_pred):
+        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)

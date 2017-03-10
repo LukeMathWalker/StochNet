@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from Keras.layers import Dense, merge
+from keras.layers import Dense, merge
 from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, Mixture
 
 

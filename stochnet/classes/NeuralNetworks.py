@@ -8,9 +8,8 @@ class StochNeuralNetwork:
         self.input_tensor = input_tensor
         self.body = NN_body
         self.TopLayer_obj = TopLayer_obj
-        output_layer = self.TopLayer_obj.get_layer()
-        output = output_layer(self.body)
-        self.model = Model(input=self.input_tensor, output=output)
+        output_layer = self.TopLayer_obj.add_layer_on_top(self.body)
+        self.model = Model(input=self.input_tensor, output=output_layer)
         self.model.compile(optimizer='adam', loss=self.TopLayer_obj.loss_function)
 
     def fit(self, X_data, y_data, batch_size=32, nb_epoch=10, verbose=1, callbacks=None, validation_split=0.0):

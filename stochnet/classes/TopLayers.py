@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from keras.layers import Dense, merge, Merge
+from keras.layers import Dense, merge
 from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, Mixture
 
 
@@ -12,8 +12,8 @@ class CategoricalOutputLayer:
         self.number_of_classes = number_of_classes
         self.number_of_output_neurons = number_of_classes
 
-    def get_layer(self):
-        return Dense(self.number_of_classes, activation='softmax')
+    def add_layer_on_top(self, base_model):
+        return Dense(self.number_of_classes, activation='softmax')(base_model)
 
     def get_tensor_random_variable(self, NN_prediction):
         # NN_prediction is expected to be of the following shape:
@@ -31,15 +31,15 @@ class MultivariateNormalCholeskyOutputLayer:
         self.number_of_sub_diag_entries = self.sample_space_dimension * (self.sample_space_dimension - 1) // 2
         self.number_of_output_neurons = 2 * self.sample_space_dimension + self.number_of_sub_diag_entries
 
-    def get_layer(self):
-        mu = Dense(self.sample_space_dimension, activation=None)
-        chol_diag = Dense(self.sample_space_dimension, activation=tf.exp)
-        chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)
-        return Merge([mu, chol_diag, chol_sub_diag], mode='concat')
+    def add_layer_on_top(self, base_model):
+        mu = Dense(self.sample_space_dimension, activation=None)(base_model)
+        chol_diag = Dense(self.sample_space_dimension, activation=tf.exp)(base_model)
+        chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)(base_model)
+        return merge([mu, chol_diag, chol_sub_diag], mode='concat')
 
     def get_tensor_random_variable(self, NN_prediction):
         # NN_prediction is expected to come from a layer such as the one produced
-        # by get_layer. In particular, it has to be of the following shape:
+        # by add_layer_on_top. In particular, it has to be of the following shape:
         # [batch_size, self.number_of_output_neurons]
         mu = tf.slice(NN_prediction, [0, 0], [-1, self.sample_space_dimension])
         cholesky_diag = tf.slice(NN_prediction, [0, self.sample_space_dimension], [-1, 2 * self.sample_space_dimension])
@@ -87,16 +87,16 @@ class MixtureOutputLayer:
         for component in self.components:
             self.number_of_output_neurons += component.number_of_output_neurons
 
-    def get_layer(self):
+    def add_layer_on_top(self, base_model):
         # list comprehension preserves the order of the original list.
-        categorical_layer = self.categorical.get_layer()
-        components_layers = [component.get_layer() for component in self.components]
+        categorical_layer = self.categorical.add_layer_on_top(base_model)
+        components_layers = [component.add_layer_on_top(base_model) for component in self.components]
         mixture_layers = [categorical_layer] + components_layers
         return merge(mixture_layers, mode='concat')
 
     def get_tensor_random_variable(self, NN_prediction):
         # NN_prediction is expected to come from a layer such as the one produced
-        # by get_layer. In particular, it has to be of the following shape:
+        # by add_layer_on_top. In particular, it has to be of the following shape:
         # [batch_size, self.number_of_output_neurons]
         categorical_predictions = tf.slice(NN_prediction, [0, 0], [-1, self.categorical.number_of_output_neurons])
         categorical_random_variable = self.categorical.get_tensor_random_variable(categorical_predictions)

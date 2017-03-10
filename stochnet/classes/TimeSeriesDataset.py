@@ -47,6 +47,7 @@ class TimeSeriesDataset:
             # StandardScaler expects data of the form [n_samples, n_features]
             flat_data = self.data.reshape(-1, self.nb_features)
             self.data = self.scaler.fit_transform(flat_data)
+            self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
             self.rescaled = True
 
     def explode_into_training_pieces(self, nb_past_timesteps):

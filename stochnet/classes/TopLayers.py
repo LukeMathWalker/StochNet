@@ -89,8 +89,8 @@ class MixtureOutputLayer:
 
     def get_layer(self):
         # list comprehension preserves the order of the original list.
-        categorical_layer = self.categorical.get_layer
-        components_layers = [component.get_layer for component in self.components]
+        categorical_layer = self.categorical.get_layer()
+        components_layers = [component.get_layer() for component in self.components]
         mixture_layers = [categorical_layer] + components_layers
         return merge(mixture_layers, mode='concat')
 

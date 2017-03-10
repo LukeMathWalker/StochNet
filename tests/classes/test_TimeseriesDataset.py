@@ -41,7 +41,7 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
         scaler = timeseries_dataset.scaler
         self.assertTrue(hasattr(scaler, 'mean_'))
         self.assertTrue(hasattr(scaler, 'scale_'))
-        self.assertEqual(len(self.data.shape), 3)
+        self.assertEqual(len(timeseries_dataset.data.shape), 3)
 
     def test_if_the_output_of_explode_into_training_pieces_has_correct_shape(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address)

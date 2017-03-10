@@ -3,8 +3,9 @@ from keras.models import Model
 
 class StochNeuralNetwork:
 
-    def __init__(self, NN_body, TopLayer_obj):
-        self.input_tensor = NN_body.input
+    def __init__(self, input_tensor, NN_body, TopLayer_obj):
+        # TODO: fix eliminating input_tensor argument embedding it in NN_body somehow
+        self.input_tensor = input_tensor
         self.body = NN_body
         self.TopLayer_obj = TopLayer_obj
         output_layer = self.output_layer_obj.get_layer()

@@ -27,4 +27,4 @@ for j in range(number_of_components):
     components.append(MultivariateNormalCholeskyOutputLayer(dataset.nb_features))
 TopModel_obj = MixtureOutputLayer(components)
 
-NN = StochNeuralNetwork(NN_body, TopModel_obj)
+NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)

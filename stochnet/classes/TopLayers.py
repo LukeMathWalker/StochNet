@@ -52,7 +52,11 @@ class MultivariateNormalCholeskyOutputLayer:
         # sltm = strictly_lower_triangular_matrix
         # ltm = lower_triangular_matrix
         batch_sltm = tf.map_fn(self.to_strictly_lower_triangular_matrix, batch_sub_diag)
+        print("Batch_sltm shape")
+        print(batch_sltm.shape)
         batch_diagonal_matrix = tf.map_fn(self.to_diagonal_matrix, batch_diag)
+        print("Batch_sltm shape")
+        print(batch_diagonal_matrix.shape)
         batch_ltm = batch_sltm + batch_diagonal_matrix
         return batch_ltm
 

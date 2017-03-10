@@ -33,7 +33,7 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
         for j in range(5):
             timeseries_dataset.remove_timestamps()
         self.assertEqual(nb_features, timeseries_dataset.nb_features)
-        self.assertEqual(len(self.data.shape), 3)
+        self.assertEqual(len(timeseries_dataset.data.shape), 3)
 
     def test_if_scaler_is_fitted(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address)

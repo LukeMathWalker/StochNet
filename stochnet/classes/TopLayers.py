@@ -62,3 +62,11 @@ class MultivariateNormalCholeskyOutputLayer:
 
     def to_diagonal_matrix(self, diag):
         return tf.diag(diag)
+
+
+class MixtureOutputLayer:
+
+    def __init__(self, components, sample_space_dimension):
+        self.number_of_components = len(components)
+        self.sample_space_dimension
+        # TODO: finish here

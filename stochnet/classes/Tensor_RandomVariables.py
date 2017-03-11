@@ -5,8 +5,8 @@ from tensorflow.contrib.distributions import Mixture as tf_Mixture
 
 class Categorical:
 
-    def __init__(self, probs, validate_args=False):
-        self.distribution_obj = tf_Categorical(p=probs, validate_args=validate_args)
+    def __init__(self, logits, validate_args=False):
+        self.distribution_obj = tf_Categorical(logits=logits, validate_args=validate_args)
         self.number_of_classes = self.distribution_obj.num_classes
 
 

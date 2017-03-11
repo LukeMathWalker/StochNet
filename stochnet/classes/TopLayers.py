@@ -138,6 +138,4 @@ class MixtureOutputLayer:
         return Mixture(categorical_random_variable, components_random_variable).distribution_obj
 
     def loss_function(self, y_true, y_pred):
-        print(y_true.shape)
-        print(y_pred.shape)
         return -self.get_tensor_random_variable(y_pred).log_prob(y_true)

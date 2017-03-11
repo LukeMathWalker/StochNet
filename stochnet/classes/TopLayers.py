@@ -25,24 +25,24 @@ class CategoricalOutputLayer:
             self.number_of_output_neurons = new_number_of_classes
         else:
             raise ValueError('''The number of classes for a categorical random
-                              variable needs to be greater than one!''')
+                              variable needs to be at least one!''')
 
     def add_layer_on_top(self, base_model):
         logits_on_top = Dense(self._number_of_classes, activation=None)(base_model)
         return logits_on_top
 
     def get_tensor_random_variable(self, NN_prediction):
-        # NN_prediction is expected to be of the following shape:
-        # [batch_size, self.number_of_classes]
         self.check_NN_prediction_shape(NN_prediction)
         return Categorical(NN_prediction).distribution_obj
 
     def check_NN_prediction_shape(self, NN_prediction):
+        # NN_prediction is expected to be of the following shape:
+        # [batch_size, self.number_of_output_neurons]
         NN_prediction_shape = NN_prediction.shape.as_list()
-        if len(NN_prediction_shape) != 2 or NN_prediction[1] != self.number_of_classes:
-            raise ShapeError('''The Neural Network predictions passed as input
+        if len(NN_prediction_shape) != 2 or NN_prediction[1] != self.number_of_output_neurons:
+            raise ShapeError('''The neural network predictions passed as input
                                 are required to be of the following shape:
-                                [batch_size, number_of_classes]''')
+                                [batch_size, number_of_output_neurons]''')
 
     def loss_function(self, y_true, y_pred):
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)
@@ -52,9 +52,7 @@ class CategoricalOutputLayer:
 class MultivariateNormalCholeskyOutputLayer:
 
     def __init__(self, sample_space_dimension):
-        self._sample_space_dimension = sample_space_dimension
-        self.number_of_sub_diag_entries = self._sample_space_dimension * (self._sample_space_dimension - 1) // 2
-        self.number_of_output_neurons = 2 * self._sample_space_dimension + self.number_of_sub_diag_entries
+        self.sample_space_dimension = sample_space_dimension
 
     @property
     def sample_space_dimension(self):
@@ -62,11 +60,13 @@ class MultivariateNormalCholeskyOutputLayer:
 
     @sample_space_dimension.setter
     def sample_space_dimension(self, new_sample_space_dimension):
-        # setting a new _sample_space_dimension requires to change number_of_sub_diag_entries
-        # and number_of_output_neurons accordingly
-        self._sample_space_dimension = new_sample_space_dimension
-        self.number_of_sub_diag_entries = self._sample_space_dimension * (self._sample_space_dimension - 1) // 2
-        self.number_of_output_neurons = 2 * self._sample_space_dimension + self.number_of_sub_diag_entries
+        if new_sample_space_dimension > 0:
+            self._sample_space_dimension = new_sample_space_dimension
+            self.number_of_sub_diag_entries = self._sample_space_dimension * (self._sample_space_dimension - 1) // 2
+            self.number_of_output_neurons = 2 * self._sample_space_dimension + self.number_of_sub_diag_entries
+        else:
+            raise ValueError('''The sample space dimension for a multivariate
+                              normal variable needs to be at least one!''')
 
     def add_layer_on_top(self, base_model):
         mu = Dense(self._sample_space_dimension, activation=None)(base_model)
@@ -75,14 +75,22 @@ class MultivariateNormalCholeskyOutputLayer:
         return merge([mu, chol_diag, chol_sub_diag], mode='concat')
 
     def get_tensor_random_variable(self, NN_prediction):
-        # NN_prediction is expected to come from a layer such as the one produced
-        # by add_layer_on_top. In particular, it has to be of the following shape:
-        # [batch_size, self.number_of_output_neurons]
+        self.check_NN_prediction_shape(NN_prediction)
         mu = tf.slice(NN_prediction, [0, 0], [-1, self._sample_space_dimension])
         cholesky_diag = tf.slice(NN_prediction, [0, self._sample_space_dimension], [-1, self._sample_space_dimension])
         cholesky_sub_diag = tf.slice(NN_prediction, [0, 2 * self._sample_space_dimension], [-1, self.number_of_sub_diag_entries])
         cholesky = self.batch_to_lower_triangular_matrix(cholesky_diag, cholesky_sub_diag)
         return MultivariateNormalCholesky(mu, cholesky).distribution_obj
+
+    def check_NN_prediction_shape(self, NN_prediction):
+        # NN_prediction is expected to come from a layer such as the one produced
+        # by add_layer_on_top. In particular, it has to be of the following shape:
+        # [batch_size, self.number_of_output_neurons]
+        NN_prediction_shape = NN_prediction.shape.as_list()
+        if len(NN_prediction_shape) != 2 or NN_prediction[1] != self.number_of_output_neurons:
+            raise ShapeError('''The neural network predictions passed as input
+                                are required to be of the following shape:
+                                [batch_size, number_of_output_neurons]''')
 
     def batch_to_lower_triangular_matrix(self, batch_diag, batch_sub_diag):
         # batch_diag, batch_sub_diag: [batch_size, *]

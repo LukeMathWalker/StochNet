@@ -56,6 +56,15 @@ class Test_CategoricalOutputLayer_with_Invalid_Input(tf.test.TestCase):
         with self.assertRaises(ShapeError):
             categorical_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
 
+    def test_get_random_tensor_variable_using_input_with_wrong_number_of_output_neurons(self):
+        number_of_classes = random.randrange(50, 100)
+        batch_size = random.randrange(100)
+        categorical_output_layer = CategoricalOutputLayer(number_of_classes)
+        tensor_shape = (batch_size, number_of_classes + random.randrange(2, 25))
+        NN_prediction_with_invalid_shape = tf.random_uniform(tensor_shape, maxval=2**7, dtype=tf.float32)
+        with self.assertRaises(ShapeError):
+            categorical_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
+
 
 class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(unittest.TestCase):
 
@@ -75,3 +84,35 @@ class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(unittest.TestC
         input_tensor = Input(shape=(random.randrange(100),))
         output_layer = self.MNC_output_layer.add_layer_on_top(input_tensor)
         self.assertEqual(output_layer.shape.as_list(), [None, self.MNC_output_layer.number_of_output_neurons])
+
+
+class Test_MultivariateNormalCholeskyOutputLayer_with_Invalid_Input(unittest.TestCase):
+
+    def test_init_using_zero_sample_space_dimension(self):
+        sample_space_dimension = 0
+        with self.assertRaises(ValueError):
+            MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
+
+    def test_init_using_a_negative_sample_space_dimension(self):
+        sample_space_dimension = -random.randrange(100)
+        with self.assertRaises(ValueError):
+            MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
+
+    def test_get_random_tensor_variable_using_input_without_batch_dimension(self):
+        sample_space_dimension = random.randrange(100)
+        MNC_output_layer = MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
+        tensor_shape = (sample_space_dimension,)
+        NN_prediction_with_invalid_shape = tf.random_uniform(tensor_shape, maxval=2**7, dtype=tf.float32)
+        with self.assertRaises(ShapeError):
+            MNC_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
+
+    def test_get_random_tensor_variable_using_input_with_wrong_number_of_output_neurons(self):
+        sample_space_dimension = random.randrange(50, 100)
+        batch_size = random.randrange(100)
+        MNC_output_layer = MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
+        tensor_shape = (batch_size, MNC_output_layer.number_of_output_neurons + random.randrange(2, 25))
+        NN_prediction_with_invalid_shape = tf.random_uniform(tensor_shape, maxval=2**7, dtype=tf.float32)
+        with self.assertRaises(ShapeError):
+            MNC_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
+
+    # TODO: add a test passing a not-positive cholesky diagonal

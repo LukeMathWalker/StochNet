@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from keras.layers import Dense, merge
 from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, Mixture
+from stochnet.classes.Errors import ShapeError
 
 
 class CategoricalOutputLayer:
@@ -33,7 +34,15 @@ class CategoricalOutputLayer:
     def get_tensor_random_variable(self, NN_prediction):
         # NN_prediction is expected to be of the following shape:
         # [batch_size, self.number_of_classes]
+        self.check_NN_prediction_shape(NN_prediction)
         return Categorical(NN_prediction).distribution_obj
+
+    def check_NN_prediction_shape(self, NN_prediction):
+        NN_prediction_shape = NN_prediction.shape.as_list()
+        if len(NN_prediction_shape) != 2 or NN_prediction[1] != self.number_of_classes:
+            raise ShapeError('''The Neural Network predictions passed as input
+                                are required to be of the following shape:
+                                [batch_size, number_of_classes]''')
 
     def loss_function(self, y_true, y_pred):
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)

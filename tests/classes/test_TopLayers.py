@@ -1,6 +1,7 @@
 import unittest
 import tensorflow as tf
 from stochnet.classes.TopLayers import CategoricalOutputLayer, MultivariateNormalCholeskyOutputLayer
+from stochnet.classes.Errors import ShapeError
 from keras.layers import Input
 import random
 
@@ -46,6 +47,14 @@ class Test_CategoricalOutputLayer_with_Invalid_Input(tf.test.TestCase):
         number_of_classes = -random.randrange(100)
         with self.assertRaises(ValueError):
             CategoricalOutputLayer(number_of_classes)
+
+    def test_get_random_tensor_variable_using_input_without_batch_dimension(self):
+        number_of_classes = random.randrange(100)
+        categorical_output_layer = CategoricalOutputLayer(number_of_classes)
+        tensor_shape = (number_of_classes,)
+        NN_prediction_with_invalid_shape = tf.random_uniform(tensor_shape, maxval=2**7, dtype=tf.float32)
+        with self.assertRaises(ShapeError):
+            categorical_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
 
 
 class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(unittest.TestCase):

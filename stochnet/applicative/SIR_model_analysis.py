@@ -11,13 +11,12 @@ from keras.layers import Input, LSTM, Dense
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
+dataset_address = os.path.join(basename, 'dataset/dataset_00.npy')
+
+dataset = TimeSeriesDataset(dataset_address)
 
 nb_past_timesteps = 3
-
-dataset_address = os.path.join(basename, 'dataset/dataset_00.npy')
-dataset = TimeSeriesDataset(dataset_address)
-dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps)
-dataset.train_test_split(percentage_of_test_data=0.25)
+dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25)
 
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
 hidden1 = LSTM(150)(input_tensor)

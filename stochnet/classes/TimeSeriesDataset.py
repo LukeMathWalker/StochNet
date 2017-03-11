@@ -26,7 +26,7 @@ class TimeSeriesDataset:
                               [nb_trajectories, nb_timesteps, nb_features]''')
 
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
-                              must_be_rescaled=True):
+                              must_be_rescaled=True, percentage_of_test_data=0.25):
         if keep_timestamps is False:
             self.remove_timestamps()
 
@@ -34,6 +34,7 @@ class TimeSeriesDataset:
             self.rescale()
 
         self.explode_into_training_pieces(nb_past_timesteps)
+        self.train_test_split(percentage_of_test_data=percentage_of_test_data)
 
     def remove_timestamps(self):
         if self.with_timestamps is True:

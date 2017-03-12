@@ -24,8 +24,7 @@ class CategoricalOutputLayer:
             self._number_of_classes = new_number_of_classes
             self.number_of_output_neurons = new_number_of_classes
         else:
-            raise ValueError('''The number of classes for a categorical random
-                              variable needs to be at least one!''')
+            raise ValueError('''The number of classes for a categorical random variable needs to be at least one!''')
 
     def add_layer_on_top(self, base_model):
         logits_on_top = Dense(self._number_of_classes, activation=None)(base_model)
@@ -33,16 +32,18 @@ class CategoricalOutputLayer:
 
     def get_tensor_random_variable(self, NN_prediction):
         self.check_NN_prediction_shape(NN_prediction)
-        return Categorical(NN_prediction).distribution_obj
+        return Categorical(NN_prediction)
 
     def check_NN_prediction_shape(self, NN_prediction):
         # NN_prediction is expected to be of the following shape:
         # [batch_size, self.number_of_output_neurons]
         NN_prediction_shape = NN_prediction.shape.as_list()
-        if len(NN_prediction_shape) != 2 or NN_prediction[1] != self.number_of_output_neurons:
-            raise ShapeError('''The neural network predictions passed as input
-                                are required to be of the following shape:
-                                [batch_size, number_of_output_neurons]''')
+        if len(NN_prediction_shape) != 2 or NN_prediction_shape[1] != self.number_of_output_neurons:
+            raise ShapeError("The neural network predictions passed as input "
+                             "are required to be of the following shape: "
+                             "[batch_size, number_of_output_neurons].\n"
+                             "Your neural network predictions had the following "
+                             "shape: {0}".format(NN_prediction_shape))
 
     def loss_function(self, y_true, y_pred):
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)
@@ -65,8 +66,7 @@ class MultivariateNormalCholeskyOutputLayer:
             self.number_of_sub_diag_entries = self._sample_space_dimension * (self._sample_space_dimension - 1) // 2
             self.number_of_output_neurons = 2 * self._sample_space_dimension + self.number_of_sub_diag_entries
         else:
-            raise ValueError('''The sample space dimension for a multivariate
-                              normal variable needs to be at least one!''')
+            raise ValueError('''The sample space dimension for a multivariate normal variable needs to be at least one!''')
 
     def add_layer_on_top(self, base_model):
         mu = Dense(self._sample_space_dimension, activation=None)(base_model)
@@ -80,17 +80,19 @@ class MultivariateNormalCholeskyOutputLayer:
         cholesky_diag = tf.slice(NN_prediction, [0, self._sample_space_dimension], [-1, self._sample_space_dimension])
         cholesky_sub_diag = tf.slice(NN_prediction, [0, 2 * self._sample_space_dimension], [-1, self.number_of_sub_diag_entries])
         cholesky = self.batch_to_lower_triangular_matrix(cholesky_diag, cholesky_sub_diag)
-        return MultivariateNormalCholesky(mu, cholesky).distribution_obj
+        return MultivariateNormalCholesky(mu, cholesky)
 
     def check_NN_prediction_shape(self, NN_prediction):
         # NN_prediction is expected to come from a layer such as the one produced
         # by add_layer_on_top. In particular, it has to be of the following shape:
         # [batch_size, self.number_of_output_neurons]
         NN_prediction_shape = NN_prediction.shape.as_list()
-        if len(NN_prediction_shape) != 2 or NN_prediction[1] != self.number_of_output_neurons:
-            raise ShapeError('''The neural network predictions passed as input
-                                are required to be of the following shape:
-                                [batch_size, number_of_output_neurons]''')
+        if len(NN_prediction_shape) != 2 or NN_prediction_shape[1] != self.number_of_output_neurons:
+            raise ShapeError("The neural network predictions passed as input "
+                             "are required to be of the following shape: "
+                             "[batch_size, number_of_output_neurons].\n"
+                             "Your neural network predictions had the following "
+                             "shape: {0}\n This output layer has {1} neurons".format(NN_prediction_shape, self.number_of_output_neurons))
 
     def batch_to_lower_triangular_matrix(self, batch_diag, batch_sub_diag):
         # batch_diag, batch_sub_diag: [batch_size, *]
@@ -152,7 +154,7 @@ class MixtureOutputLayer:
             component_random_variable = component.get_tensor_random_variable(component_predictions)
             components_random_variable.append(component_random_variable)
             start_slicing_index += component.number_of_output_neurons
-        return Mixture(categorical_random_variable, components_random_variable).distribution_obj
+        return Mixture(categorical_random_variable, components_random_variable)
 
     def loss_function(self, y_true, y_pred):
         return -self.get_tensor_random_variable(y_pred).log_prob(y_true)

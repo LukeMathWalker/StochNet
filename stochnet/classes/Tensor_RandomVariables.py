@@ -15,11 +15,16 @@ class MultivariateNormalCholesky:
     def __init__(self, mu, chol, validate_args=False):
         self.distribution_obj = tf_MultivariateNormalCholesky(mu, chol, validate_args=validate_args)
 
+    def log_prob(self, value):
+        return self.distribution_obj.log_prob(value)
+
 
 class Mixture:
 
     def __init__(self, cat, components, validate_args=False):
-        self.distribution_obj = tf_Mixture(cat, components, validate_args=validate_args)
+        tf_cat = cat.distribution_obj
+        tf_components = [component.distribution_obj for component in components]
+        self.distribution_obj = tf_Mixture(tf_cat, tf_components, validate_args=validate_args)
 
     def log_prob(self, value):
         return self.distribution_obj.log_prob(value)

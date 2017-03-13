@@ -7,7 +7,7 @@ from keras.layers import Input, LSTM, Dense
 # We need to get to the proper directory first
 # We are in ./stochnet/applicative
 # We want to be in ./stochnet
-# os.getcwd returns the directory we are working in and we use dirname to get the parent directory
+# os.getcwd returns the directory we are working in and we use dirname to get its parent directory
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
@@ -29,4 +29,8 @@ for j in range(number_of_components):
 TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
-NN.fit(dataset.X_train, dataset.y_train)
+NN.fit(dataset.X_train, dataset.y_train, nb_epoch=1)
+
+test_set_prediction = NN.predict(dataset.X_test)
+NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction)
+samples = NN.sample(test_set_prediction)

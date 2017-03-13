@@ -18,6 +18,14 @@ class MultivariateNormalCholesky:
     def log_prob(self, value):
         return self.distribution_obj.log_prob(value)
 
+    @property
+    def mean(self):
+        return self.distribution_obj.mu
+
+    @property
+    def covariance(self):
+        return self.distribution_obj.sigma
+
 
 class Mixture:
 

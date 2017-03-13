@@ -66,7 +66,7 @@ class Test_CategoricalOutputLayer_with_Invalid_Input(tf.test.TestCase):
             categorical_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
 
 
-class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(unittest.TestCase):
+class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(tf.test.TestCase):
 
     def setUp(self):
         self.sample_space_dimension = random.randrange(100)
@@ -86,7 +86,7 @@ class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(unittest.TestC
         self.assertEqual(output_layer.shape.as_list(), [None, self.MNC_output_layer.number_of_output_neurons])
 
 
-class Test_MultivariateNormalCholeskyOutputLayer_with_Invalid_Input(unittest.TestCase):
+class Test_MultivariateNormalCholeskyOutputLayer_with_Invalid_Input(tf.test.TestCase):
 
     def test_init_using_zero_sample_space_dimension(self):
         sample_space_dimension = 0
@@ -115,4 +115,19 @@ class Test_MultivariateNormalCholeskyOutputLayer_with_Invalid_Input(unittest.Tes
         with self.assertRaises(ShapeError):
             MNC_output_layer.get_tensor_random_variable(NN_prediction_with_invalid_shape)
 
-    # TODO: add a test passing a not-positive cholesky diagonal
+    def test_get_random_tensor_variable_using_a_non_positive_cholesky_diagonal(self):
+        with self.test_session():
+            sample_space_dimension = random.randrange(50, 100)
+            batch_size = random.randrange(100)
+            MNC_output_layer = MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
+            tensor_shape = (batch_size, MNC_output_layer.number_of_output_neurons)
+            NN_prediction_with_negative_cholesky_diag = tf.random_uniform(tensor_shape,
+                                                                          minval=-2**7,
+                                                                          maxval=0,
+                                                                          dtype=tf.float32)
+            random_var = MNC_output_layer.get_tensor_random_variable(NN_prediction_with_negative_cholesky_diag)
+            with self.assertRaises(tf.errors.InvalidArgumentError):
+                # The InvalidArgumentError is raised only when the tensorflow
+                # graph is actually executed, that's why we need to explicitly
+                # ask for the MNC covariance matrix.
+                random_var.covariance.eval()

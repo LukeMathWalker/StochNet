@@ -1,7 +1,6 @@
-import unittest
 import tensorflow as tf
-from stochnet.classes.TopLayers import CategoricalOutputLayer, MultivariateNormalCholeskyOutputLayer
-from stochnet.classes.Errors import ShapeError
+from stochnet.classes.TopLayers import CategoricalOutputLayer, MultivariateNormalCholeskyOutputLayer, MixtureOutputLayer
+from stochnet.classes.Errors import ShapeError, DimensionError
 from keras.layers import Input
 import random
 
@@ -26,14 +25,14 @@ class Test_CategoricalOutputLayer_with_Valid_Input(tf.test.TestCase):
         self.assertEqual(output_layer.shape.as_list(), [None, self.categorical_output_layer.number_of_output_neurons])
 
     def test_that_loss_function_returns_a_correctly_shaped_tensor(self):
+        batch_size = random.randrange(100)
+        tensor_shape = (batch_size, self.categorical_output_layer.number_of_output_neurons)
+        logits = tf.random_uniform(tensor_shape, maxval=2**7, dtype=tf.float32)
+        correct_labels = tf.random_uniform(tensor_shape, maxval=self.number_of_classes, dtype=tf.int32)
         with self.test_session():
-            batch_size = random.randrange(100)
-            tensor_shape = (batch_size, self.categorical_output_layer.number_of_output_neurons)
-            logits = tf.random_uniform(tensor_shape, maxval=2**7, dtype=tf.float32)
-            correct_labels = tf.random_uniform(tensor_shape, maxval=self.number_of_classes, dtype=tf.int32)
             loss = self.categorical_output_layer.loss_function(correct_labels, logits).eval()
-            self.assertEqual(len(loss.shape), 1)
-            self.assertEqual(loss.shape[0], batch_size)
+        self.assertEqual(len(loss.shape), 1)
+        self.assertEqual(loss.shape[0], batch_size)
 
 
 class Test_CategoricalOutputLayer_with_Invalid_Input(tf.test.TestCase):
@@ -88,15 +87,10 @@ class Test_MultivariateNormalCholeskyOutputLayer_with_Valid_Input(tf.test.TestCa
 
 class Test_MultivariateNormalCholeskyOutputLayer_with_Invalid_Input(tf.test.TestCase):
 
-    def test_init_using_zero_sample_space_dimension(self):
-        sample_space_dimension = 0
-        with self.assertRaises(ValueError):
-            MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
-
-    def test_init_using_a_negative_sample_space_dimension(self):
-        sample_space_dimension = -random.randrange(100)
-        with self.assertRaises(ValueError):
-            MultivariateNormalCholeskyOutputLayer(sample_space_dimension)
+    def test_init_using_invalid_sample_space_dimension(self):
+        for invalid_sample_space_dimension in range(1, -5):
+            with self.assertRaises(ValueError):
+                MultivariateNormalCholeskyOutputLayer(invalid_sample_space_dimension)
 
     def test_get_random_tensor_variable_using_input_without_batch_dimension(self):
         sample_space_dimension = random.randrange(100)
@@ -131,3 +125,17 @@ class Test_MultivariateNormalCholeskyOutputLayer_with_Invalid_Input(tf.test.Test
                 # graph is actually executed, that's why we need to explicitly
                 # ask for the MNC covariance matrix.
                 random_var.covariance.eval()
+
+
+class Test_MixtureOutputLayer_with_Invalid_Input(tf.test.TestCase):
+
+    def test_init_using_components_sampling_from_spaces_with_different_dimensions(self):
+        components = []
+        for j in range(2, 5):
+            components.append(MultivariateNormalCholeskyOutputLayer(j))
+        with self.assertRaises(DimensionError):
+            MixtureOutputLayer(components)
+
+    def test_init_using_an_empty_list_of_components(self):
+        with self.assertRaises(ValueError):
+            MixtureOutputLayer([])

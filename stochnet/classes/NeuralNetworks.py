@@ -1,4 +1,5 @@
 from keras.models import Model
+import tensorflow as tf
 
 
 class StochNeuralNetwork:
@@ -22,3 +23,31 @@ class StochNeuralNetwork:
 
     def predict(self, X_data, batch_size=32, verbose=0):
         return self.model.predict(X_data, batch_size=batch_size, verbose=verbose)
+
+    def visualize_performance_by_sampling(self, X_data, y_data, NN_prediction, max_display=10):
+        to_be_used_for_sampling = self.get_first_M_predictions(NN_prediction, max_display)
+        samples = self.sample(to_be_used_for_sampling, max_number_of_samples=max_display)
+        descriptions = self.TopLayer_obj.get_description(to_be_used_for_sampling)
+        number_of_samples = len(samples)
+        for j in range(number_of_samples):
+            print("\n\n\nInput data:\n")
+            print(X_data[j, ...])
+            print("\nDescription of the model provided as output by the neural network:\n")
+            print(descriptions[j])
+            print("\nCorrect output:\n")
+            print(y_data[j, ...])
+            print("\nOutput obtained by sampling:\n")
+            print(samples[j, ...])
+            print('\n')
+            # TODO: fix
+
+    def sample(self, NN_prediction, max_number_of_samples=10):
+        to_be_used_for_sampling = self.get_first_M_predictions(NN_prediction, max_number_of_samples)
+        samples = self.TopLayer_obj.sample(to_be_used_for_sampling)
+        return samples
+
+    def get_first_M_predictions(self, NN_prediction, M):
+        batch_size = int(NN_prediction.shape[0])
+        slicing_size = min(batch_size, M)
+        first_M_predictions = tf.slice(NN_prediction, [0, 0], [slicing_size, -1])
+        return first_M_predictions

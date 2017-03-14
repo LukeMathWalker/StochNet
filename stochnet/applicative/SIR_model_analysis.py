@@ -12,7 +12,7 @@ from keras.callbacks import EarlyStopping
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
-dataset_address = os.path.join(basename, 'dataset/dataset_00.npy')
+dataset_address = os.path.join(basename, 'dataset/SIR_dataset.npy')
 
 dataset = TimeSeriesDataset(dataset_address)
 

@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# atom extensions file
+.imdone/
+
 # C extensions
 *.so
 

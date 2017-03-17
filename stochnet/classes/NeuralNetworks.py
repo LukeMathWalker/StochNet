@@ -21,6 +21,15 @@ class StochNeuralNetwork:
                        callbacks=callbacks,
                        validation_split=validation_split)
 
+    def fit_generator(self, training_generator, steps_per_epoch, epochs=5, verbose=1, callbacks=None, validation_generator=None, validation_steps=100):
+        self.model.fit_generator(generator=training_generator,
+                                 samples_per_epoch=steps_per_epoch,
+                                 nb_epoch=epochs,
+                                 verbose=verbose,
+                                 callbacks=callbacks,
+                                 validation_data=validation_generator,
+                                 nb_val_samples=validation_steps)
+
     def predict(self, X_data, batch_size=32, verbose=0):
         return self.model.predict(X_data, batch_size=batch_size, verbose=verbose)
 
@@ -39,7 +48,7 @@ class StochNeuralNetwork:
             print("\nOutput obtained by sampling:\n")
             print(samples[j, ...])
             print('\n')
-            # TODO: fix
+            # TODO: improve formatting
 
     def sample(self, NN_prediction, max_number_of_samples=10):
         to_be_used_for_sampling = self.get_first_M_predictions(NN_prediction, max_number_of_samples)

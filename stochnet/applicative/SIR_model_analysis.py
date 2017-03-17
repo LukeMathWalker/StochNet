@@ -16,12 +16,13 @@ dataset_address = os.path.join(basename, 'dataset/SIR_dataset.npy')
 
 dataset = TimeSeriesDataset(dataset_address)
 
-nb_past_timesteps = 3
+nb_past_timesteps = 10
 dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25)
 
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
-hidden1 = LSTM(150)(input_tensor)
-NN_body = Dense(75)(hidden1)
+hidden1 = LSTM(150, return_sequences=True)(input_tensor)
+hidden2 = LSTM(150)(hidden1)
+NN_body = Dense(75)(hidden2)
 
 number_of_components = 2
 components = []
@@ -30,7 +31,7 @@ for j in range(number_of_components):
 TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
-callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')]
+callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
 NN.fit(dataset.X_train, dataset.y_train, nb_epoch=50, validation_split=0.2, callbacks=callbacks)
 
 test_set_prediction = NN.predict(dataset.X_test)

@@ -3,6 +3,7 @@ import numpy as np
 import os
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.Errors import ShapeError
+from bidict import ValueDuplicationError
 
 
 class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
@@ -18,7 +19,11 @@ class Test_TimeSeriesDataset_with_Valid_Input(unittest.TestCase):
             np.save(data_file, data)
 
     def test_init_with_valid_address(self):
-        timeseries_dataset = TimeSeriesDataset(self.dataset_address)
+        _ = TimeSeriesDataset(self.dataset_address)
+
+    def test_init_with_labels(self):
+        labels = {key: value for (key, value) in zip('abcde', range(5))}
+        _ = TimeSeriesDataset(self.dataset_address, labels=labels)
 
     def test_remove_timestamps_once(self):
         timeseries_dataset = TimeSeriesDataset(self.dataset_address, with_timestamps=True)
@@ -72,6 +77,22 @@ class Test_TimeSeriesDataset_with_Invalid_Input(unittest.TestCase):
             np.save(data_file, data)
         with self.assertRaises(ShapeError):
             TimeSeriesDataset(self.dataset_address)
+
+    def test_init_using_labels_with_invalid_shape(self):
+        data = np.random.rand(2, 3, 5)
+        with open(self.dataset_address, 'wb') as data_file:
+            np.save(data_file, data)
+        labels_with_invalid_shape = {key: value for (key, value) in zip('abcd', range(4))}
+        with self.assertRaises(ShapeError):
+            _ = TimeSeriesDataset(self.dataset_address, labels=labels_with_invalid_shape)
+
+    def test_init_using_not_unique_labels(self):
+        data = np.random.rand(2, 3, 5)
+        with open(self.dataset_address, 'wb') as data_file:
+            np.save(data_file, data)
+        not_unique_labels = {key: value for (key, value) in zip('abcde', [0, 1, 2, 2, 3])}
+        with self.assertRaises(ValueDuplicationError):
+            _ = TimeSeriesDataset(self.dataset_address, labels=not_unique_labels)
 
     def test_explode_into_training_pieces_with_too_many_past_timesteps(self):
         data = np.random.rand(2, 3, 5)

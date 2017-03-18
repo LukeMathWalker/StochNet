@@ -1,9 +1,8 @@
 import os
-import numpy as np
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MixtureOutputLayer
-from keras.layers import Input, LSTM, Dense
+from keras.layers import Input, LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
 
 
@@ -29,9 +28,9 @@ nb_past_timesteps = 10
 dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25)
 
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
-hidden1 = LSTM(150, return_sequences=True)(input_tensor)
-hidden2 = LSTM(150)(hidden1)
-NN_body = Dense(75)(hidden2)
+hidden1 = LSTM(150)(input_tensor)
+dropout1 = Dropout(0.3)(hidden1)
+NN_body = Dense(75)(dropout1)
 
 number_of_components = 3
 components = []
@@ -42,16 +41,8 @@ TopModel_obj = MixtureOutputLayer(components)
 print(dataset.X_data.shape)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
-callbacks = [EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, nb_epoch=50, validation_split=0.2, callbacks=callbacks)
-# training_generator = generate_batches_from_array(dataset.X_train, dataset.y_train)
-# validation_generator = generate_batches_from_array(dataset.X_test, dataset.y_test)
-# NN.fit_generator(training_generator=training_generator,
-#                  steps_per_epoch=100000,
-#                  epochs=50,
-#                  callbacks=callbacks,
-#                  validation_generator=validation_generator,
-#                  validation_steps=40000)
+callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')]
+NN.fit(dataset.X_train, dataset.y_train, batch_size=2048, nb_epoch=50, validation_split=0.2, callbacks=callbacks)
 
 
 test_set_prediction = NN.predict(dataset.X_test)

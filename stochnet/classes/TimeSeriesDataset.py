@@ -2,18 +2,21 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from stochnet.classes.Errors import ShapeError
 import numpy as np
+from bidict import bidict
 
 
 class TimeSeriesDataset:
 
-    def __init__(self, dataset_address, with_timestamps=True):
+    def __init__(self, dataset_address, with_timestamps=True, labels=None):
         # data: [n_trajectories, n_timesteps, nb_features]
-        # data[:,:,0] contains the timestamps if with_timestamps is True
+        # if with_timestamps is True the corresponding column is labeled
+        # "Timestamps" indipendently of the desired user label
         with open(dataset_address, 'rb') as data_file:
             self.data = np.load(data_file)
         self.memorize_dataset_shape()
         self.rescaled = False
         self.with_timestamps = with_timestamps
+        self.set_labels(labels)
 
     def memorize_dataset_shape(self):
         try:
@@ -24,6 +27,22 @@ class TimeSeriesDataset:
             raise ShapeError('''The dataset is not properly formatted.\n
                               We expect the following shape:
                               [nb_trajectories, nb_timesteps, nb_features]''')
+
+    def set_labels(self, labels):
+        if labels is None:
+            self.with_labels = False
+        elif len(labels) != self.nb_features:
+            raise ShapeError("There needs to be exactly one label for each feature!\n"
+                             "We have {0} labels for {1} features.".format(len(labels), self.nb_features))
+        else:
+            self.labels = bidict(labels)
+            self.set_timestamps_label()
+            self.with_labels = True
+
+    def set_timestamps_label(self):
+        if self.with_timestamps is True:
+            self.labels.inv.pop(0)
+            self.labels['timestamps'] = 0
 
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
                               must_be_rescaled=True, percentage_of_test_data=0.25):
@@ -37,10 +56,13 @@ class TimeSeriesDataset:
         self.train_test_split(percentage_of_test_data=percentage_of_test_data)
 
     def remove_timestamps(self):
+        # data[:,:,0] contains the timestamps if with_timestamps is True
         if self.with_timestamps is True:
             self.data = self.data[..., 1:]
             self.nb_features = self.nb_features - 1
             self.with_timestamps = False
+            if self.with_labels is True:
+                self.labels.pop('timestamps')
 
     def rescale(self):
         if self.rescaled is False:

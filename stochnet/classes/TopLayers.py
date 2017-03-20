@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import abc
-from keras.layers import Dense, merge
+from keras.layers import Dense
+from keras.layers.merge import concatenate
 from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, Mixture
 from stochnet.classes.Errors import ShapeError, DimensionError
 
@@ -102,6 +103,10 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)
         return loss
 
+    def log_likelihood_function(self, y_true, y_pred):
+        log_likelihood = -tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)
+        return log_likelihood
+
 
 class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
 
@@ -125,7 +130,7 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
         mu = Dense(self._sample_space_dimension, activation=None)(base_model)
         chol_diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
         chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)(base_model)
-        return merge([mu, chol_diag, chol_sub_diag], mode='concat')
+        return concatenate([mu, chol_diag, chol_sub_diag], axis=-1)
 
     def get_tensor_random_variable(self, NN_prediction):
         self.check_NN_prediction_shape(NN_prediction)
@@ -171,6 +176,9 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
     def loss_function(self, y_true, y_pred):
         return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
 
+    def log_likelihood(self, y_true, y_pred):
+        return self.get_tensor_random_variable(y_pred).log_prob(y_true)
+
 
 class MixtureOutputLayer(RandomVariableOutputLayer):
 
@@ -202,7 +210,7 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
         categorical_layer = self.categorical.add_layer_on_top(base_model)
         components_layers = [component.add_layer_on_top(base_model) for component in self.components]
         mixture_layers = [categorical_layer] + components_layers
-        return merge(mixture_layers, mode='concat')
+        return concatenate(mixture_layers, axis=-1)
 
     def get_tensor_random_variable(self, NN_prediction):
         self.check_NN_prediction_shape(NN_prediction)
@@ -228,3 +236,6 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
 
     def loss_function(self, y_true, y_pred):
         return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+
+    def log_likelihood_function(self, y_true, y_pred):
+        return self.get_tensor_random_variable(y_pred).log_prob(y_true)

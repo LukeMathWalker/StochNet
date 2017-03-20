@@ -6,7 +6,8 @@ from bidict import bidict
 
 
 class TimeSeriesDataset:
-
+    # TODO: add the possibility of dropping features.
+    # Pay attentions to self.scaler and self.labels.
     def __init__(self, dataset_address, with_timestamps=True, labels=None):
         # data: [n_trajectories, n_timesteps, nb_features]
         # if with_timestamps is True the corresponding column is labeled
@@ -63,6 +64,7 @@ class TimeSeriesDataset:
             self.with_timestamps = False
             if self.with_labels is True:
                 self.labels.pop('timestamps')
+        # FIX: other labels indexes need to be diminished by 1
 
     def rescale(self):
         if self.rescaled is False:

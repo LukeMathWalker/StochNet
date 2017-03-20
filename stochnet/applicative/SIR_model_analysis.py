@@ -13,10 +13,11 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 dataset_address = os.path.join(basename, 'dataset/SIR_dataset.npy')
+data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
 
-dataset = TimeSeriesDataset(dataset_address)
+dataset = TimeSeriesDataset(dataset_address, labels=data_labels)
 
-nb_past_timesteps = 10
+nb_past_timesteps = 5
 dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25)
 
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
@@ -35,4 +36,6 @@ callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min'
 NN.fit(dataset.X_train, dataset.y_train, nb_epoch=50, validation_split=0.2, callbacks=callbacks)
 
 test_set_prediction = NN.predict(dataset.X_test)
-NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction, max_display=2)
+NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction,
+                                     max_display=2, fitted_scaler=dataset.scaler,
+                                     feature_labels=dataset.labels)

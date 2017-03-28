@@ -12,6 +12,7 @@ from sklearn.model_selection import RandomizedSearchCV
 
 ##### BROKEN BROKEN BROKEN #####
 
+
 def create_stochnet(epochs=5, nb_LSTM_nodes=150, nb_Dense_nodes=75,
                     weight_constraint=None, dropout_rate=0.0, callbacks=None):
 

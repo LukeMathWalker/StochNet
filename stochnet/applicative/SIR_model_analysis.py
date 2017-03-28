@@ -33,7 +33,7 @@ TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, nb_epoch=50, validation_split=0.2, callbacks=callbacks)
+NN.fit(dataset.X_train, dataset.y_train, epochs=50, validation_split=0.2, callbacks=callbacks)
 
 test_set_prediction = NN.predict(dataset.X_test)
 NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction,

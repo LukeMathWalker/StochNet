@@ -77,11 +77,9 @@ def model(X_train, Y_train, X_test, Y_test):
 
     results.append(parameters)
     print(tabulate(results, headers="keys", tablefmt="fancy_grid", floatfmt=".8f"))
-
-    # Saving to disk
     with open('SIR_model_tuning.csv', 'w') as f:
         writer = csv.writer(f, delimiter=',')
-        writer.writerows(data)
+        writer.writerows(results)
 
     loss = NN.evaluate(X_test, Y_test, verbose=0)
     print('Test loss: {0}'.format(loss))

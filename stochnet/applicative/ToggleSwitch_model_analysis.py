@@ -42,7 +42,7 @@ print(dataset.X_data.shape)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, batch_size=2048, nb_epoch=50, validation_split=0.2, callbacks=callbacks)
+NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=50, validation_split=0.2, callbacks=callbacks)
 
 
 test_set_prediction = NN.predict(dataset.X_test)

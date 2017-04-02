@@ -1,5 +1,5 @@
 import os
-import csv
+import json
 from tabulate import tabulate
 from hyperopt import Trials, STATUS_OK, tpe
 from hyperas import optim
@@ -62,8 +62,8 @@ def model(X_train, Y_train, X_test, Y_test):
 
     callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
     result = NN.fit(X_train, Y_train,
-                    batch_size={{choice([64, 128])}},
-                    epochs=2,
+                    batch_size={{choice([64, 128, 256, 512, 1024])}},
+                    epochs=25,
                     verbose=2,
                     callbacks=callbacks,
                     validation_data=(X_test, Y_test))
@@ -77,9 +77,8 @@ def model(X_train, Y_train, X_test, Y_test):
 
     results.append(parameters)
     print(tabulate(results, headers="keys", tablefmt="fancy_grid", floatfmt=".8f"))
-    with open('SIR_model_tuning.csv', 'w') as f:
-        writer = csv.writer(f, delimiter=',')
-        writer.writerows(results)
+    with open('SIR_model_tuning.json', 'w') as f:
+        f.write(json.dumps(results))
 
     loss = NN.evaluate(X_test, Y_test, verbose=0)
     print('Test loss: {0}'.format(loss))
@@ -90,7 +89,7 @@ if __name__ == '__main__':
     best_run, best_model = optim.minimize(model=model,
                                           data=data,
                                           algo=tpe.suggest,
-                                          max_evals=3,
+                                          max_evals=25,
                                           trials=Trials())
     X_train, Y_train, X_test, Y_test = data()
     print("Evalutation of best performing model:")

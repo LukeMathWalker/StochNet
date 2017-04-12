@@ -70,7 +70,7 @@ class TimeSeriesDataset:
         if self.rescaled is False:
             if positivity == 'needed':
                 positive_eps = 2**(-25)
-                self.scaler = MinMaxScaler(feature_range=(positive_eps, 100))
+                self.scaler = MinMaxScaler(feature_range=(positive_eps, 1))
             else:
                 self.scaler = StandardScaler()
             # StandardScaler expects data of the form [n_samples, n_features]

@@ -1,4 +1,4 @@
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from stochnet.classes.Errors import ShapeError
 import numpy as np
@@ -46,12 +46,12 @@ class TimeSeriesDataset:
             self.labels['timestamps'] = 0
 
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
-                              must_be_rescaled=True, percentage_of_test_data=0.25):
+                              must_be_rescaled=True, positivity=None, percentage_of_test_data=0.25):
         if keep_timestamps is False:
             self.remove_timestamps()
 
         if must_be_rescaled is True:
-            self.rescale()
+            self.rescale(positivity)
 
         self.explode_into_training_pieces(nb_past_timesteps)
         self.train_test_split(percentage_of_test_data=percentage_of_test_data)
@@ -66,9 +66,13 @@ class TimeSeriesDataset:
                 self.labels.pop('timestamps')
         # FIX: other labels indexes need to be diminished by 1
 
-    def rescale(self):
+    def rescale(self, positivity):
         if self.rescaled is False:
-            self.scaler = StandardScaler()
+            if positivity == 'needed':
+                positive_eps = 2**(-25)
+                self.scaler = MinMaxScaler(feature_range=(positive_eps, 100))
+            else:
+                self.scaler = StandardScaler()
             # StandardScaler expects data of the form [n_samples, n_features]
             flat_data = self.data.reshape(-1, self.nb_features)
             self.data = self.scaler.fit_transform(flat_data)

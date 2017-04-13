@@ -52,8 +52,8 @@ def generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=10)
     return simulation_settings
 
 
-nb_of_settings = 50
-trajectories_nb = 100
+nb_of_settings = 250
+trajectories_nb = 5
 simulation_settings = generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=nb_of_settings)
 endtime = 5
 time_step_for_resampling = 2**(-6)
@@ -94,5 +94,5 @@ for i in range(nb_of_settings):
         final_dataset = np.concatenate((final_dataset, partial_dataset), axis=0)
     os.remove(partial_dataset_filepath)
 
-with open('SIR_dataset_upgraded.npy', 'wb') as dataset_filepath:
+with open('SIR_dataset_upgraded_2.npy', 'wb') as dataset_filepath:
     np.save(dataset_filepath, final_dataset)

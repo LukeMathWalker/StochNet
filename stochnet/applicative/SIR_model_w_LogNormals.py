@@ -20,7 +20,7 @@ import tensorflow as tf
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
-dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded.npy')
+dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_2.npy')
 data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
 
 dataset = TimeSeriesDataset(dataset_address, labels=data_labels)
@@ -34,17 +34,24 @@ NN_body = Dense(75, kernel_constraint=maxnorm(5))(hidden1)
 
 number_of_components = 2
 components = []
-for j in range(number_of_components):
-    components.append(MultivariateLogNormalOutputLayer(dataset.nb_features))
+# for j in range(number_of_components):
+#     components.append(MultivariateLogNormalOutputLayer(dataset.nb_features))
+components.append(MultivariateLogNormalOutputLayer(dataset.nb_features))
+components.append(MultivariateNormalCholeskyOutputLayer(dataset.nb_features))
 TopModel_obj = MixtureOutputLayer(components)
 
 #TopModel_obj = MultivariateLogNormalOutputLayer(dataset.nb_features)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, epochs=10, validation_split=0.2, callbacks=callbacks)
+NN.fit(dataset.X_train, dataset.y_train, epochs=4, validation_split=0.2, callbacks=callbacks)
 
 test_set_prediction = NN.predict(dataset.X_test)
 NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction,
                                      max_display=2, fitted_scaler=dataset.scaler,
                                      feature_labels=dataset.labels)
+
+test_dataset = TimeSeriesDataset(dataset_address, labels=data_labels)
+test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
+test_loss = NN.evaluate(X_data=test_dataset.X_train, y_data=test_dataset.y_train, batch_size=512)
+print('Validation loss: {0}'.format(test_loss))

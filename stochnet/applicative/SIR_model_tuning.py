@@ -26,7 +26,7 @@ def data():
     dataset = TimeSeriesDataset(dataset_address)
 
     nb_past_timesteps = 5
-    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25)
+    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25, positivity="needed")
 
     X_train = dataset.X_train
     X_test = dataset.X_test
@@ -68,8 +68,6 @@ def model(X_train, Y_train, X_test, Y_test):
                     verbose=2,
                     callbacks=callbacks,
                     validation_data=(X_test, Y_test))
-    # TODO: avoid this additional computation: can't we find the index where EarlyStopping kicks in?
-    # val_loss = result.history['val_loss'][-1]
     val_loss = NN.evaluate(X_data=X_test, y_data=Y_test, batch_size=512)
     parameters = space
     parameters["val_loss"] = val_loss

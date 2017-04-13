@@ -38,7 +38,6 @@ def data():
 def model(X_train, Y_train, X_test, Y_test):
     """
     Model providing function:
-
     Create Keras model with double curly brackets dropped-in as needed.
     Return value has to be a valid python dictionary with two customary keys:
         - loss: Specify a numeric evaluation metric to be minimized
@@ -47,10 +46,12 @@ def model(X_train, Y_train, X_test, Y_test):
         - model: specify the model just created so that we can later use it again.
     """
     input_tensor = Input(shape=(5, 3))
-    hidden1 = LSTM({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 5)}}),
-                   recurrent_constraint=maxnorm({{uniform(1, 5)}}))(input_tensor)
-    dropout1 = Dropout({{uniform(0.1, 0.8)}})(hidden1)
-    NN_body = Dense({{choice([64, 128, 256, 512, 1024])}})(dropout1)
+    hidden1 = LSTM({{choice([64, 128, 256, 512, 1024, 1536, 2048])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}),
+                   recurrent_constraint=maxnorm({{uniform(1, 3)}}))(input_tensor)
+    dropout1 = Dropout({{uniform(0.2, 0.7)}})(hidden1)
+    NN_body = Dense({{choice([64, 128, 256, 512, 1024, 1536, 2048])}})(dropout1)
+    dropout2 = Dropout({{uniform(0.2, 0.7)}})(NN_body)
+    NN_body = Dense({{choice([64, 128, 256, 512, 1024])}})(drouput2)
 
     number_of_components = 3
     components = []
@@ -62,8 +63,8 @@ def model(X_train, Y_train, X_test, Y_test):
 
     callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
     result = NN.fit(X_train, Y_train,
-                    batch_size={{choice([64, 128, 256, 512, 1024])}},
-                    epochs=25,
+                    batch_size={{choice([512, 1024, 2048, 3072, 4096])}},
+                    epochs={{choice([25, 35, 45])}},
                     verbose=2,
                     callbacks=callbacks,
                     validation_data=(X_test, Y_test))
@@ -77,7 +78,7 @@ def model(X_train, Y_train, X_test, Y_test):
 
     results.append(parameters)
     print(tabulate(results, headers="keys", tablefmt="fancy_grid", floatfmt=".8f"))
-    with open('SIR_model_tuning.json', 'w') as f:
+    with open('/home/lpalmier/workspace/output/SIR_model_tuning_05.json', 'w') as f:
         f.write(json.dumps(results))
 
     loss = NN.evaluate(X_test, Y_test, verbose=0)

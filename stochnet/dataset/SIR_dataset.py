@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import randint
 import stochpy
 import pandas as pd
 import os
@@ -32,43 +33,49 @@ def time_resampling(data, time_step=2**(-7), starting_time=0, end_time=4):
 def set_initial_parameters(simulation_obj, setting_collection, current_index):
     S = setting_collection[current_index]['S']
     I = setting_collection[current_index]['I']
+    R = setting_collection[current_index]['R']
     smod.ChangeInitialSpeciesCopyNumber("S", S)
     smod.ChangeInitialSpeciesCopyNumber("I", I)
-    smod.ChangeInitialSpeciesCopyNumber("N", S + I)
+    smod.ChangeInitialSpeciesCopyNumber("R", I)
+    smod.ChangeInitialSpeciesCopyNumber("N", S + I + R)
+    return
 
 
-nb_of_different_simulation_settings = 5
-simulation_settings = [{'S': 60, 'I': 5},
-                       {'S': 100, 'I': 10},
-                       {'S': 200, 'I': 50},
-                       {'S': 50, 'I': 25},
-                       {'S': 100, 'I': 25}]
-if nb_of_different_simulation_settings != len(simulation_settings):
-    raise ValueError("Mancano o ci sono troppi setting iniziali.")
-trajectories_nb = 30
-endtime = 4
-time_step_for_resampling = 2**(-7)
+def generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=10):
+    simulation_settings = []
+    for i in range(nb_of_settings):
+        simulation_setting = {}
+        simulation_setting['S'] = randint(low=min_value, high=max_value)
+        simulation_setting['I'] = randint(low=min_value, high=max_value)
+        simulation_setting['R'] = randint(low=min_value, high=max_value)
+        simulation_settings.append(simulation_setting)
+    return simulation_settings
 
-for i in range(nb_of_different_simulation_settings):
+
+nb_of_settings = 50
+trajectories_nb = 100
+simulation_settings = generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=nb_of_settings)
+endtime = 5
+time_step_for_resampling = 2**(-6)
+
+for i in range(nb_of_settings):
     smod = stochpy.SSA()
     smod.Model("SIR.psc")
     smod.ChangeParameter("Beta", 3)
     smod.ChangeParameter("Gamma", 1)
     set_initial_parameters(smod, simulation_settings, i)
-    R = 0
-    smod.ChangeInitialSpeciesCopyNumber("R", R)
 
     smod.DoStochSim(method="direct", trajectories=trajectories_nb, mode="time", end=endtime)
     smod.Export2File(analysis='timeseries', datatype='species', IsAverage=False, directory='SIR', quiet=False)
 
     datapoint = pd.read_table(filepath_or_buffer='SIR/SIR.psc_species_timeseries1.txt', delim_whitespace=True, header=1).drop(labels="Reaction", axis=1).drop(labels="N", axis=1).drop(labels='Fired', axis=1).as_matrix()
-    resampled_datapoint = time_resampling(datapoint, time_step=time_step_for_resampling)
+    resampled_datapoint = time_resampling(datapoint, time_step=time_step_for_resampling, end_time=endtime)
     dataset = resampled_datapoint[np.newaxis, :]
     basename = 'SIR/SIR.psc_species_timeseries'
     for j in range(2, trajectories_nb + 1):
         path = basename + str(j) + '.txt'
         datapoint = pd.read_table(filepath_or_buffer=path, delim_whitespace=True, header=1).drop(labels="Reaction", axis=1).drop(labels='Fired', axis=1).drop(labels="N", axis=1).as_matrix()
-        resampled_datapoint = time_resampling(datapoint)
+        resampled_datapoint = time_resampling(datapoint, time_step=time_step_for_resampling, end_time=endtime)
         dataset = np.concatenate((dataset, resampled_datapoint[np.newaxis, :]), axis=0)
 
     dataset_filepath = 'dataset_' + str(i) + '.npy'
@@ -77,7 +84,7 @@ for i in range(nb_of_different_simulation_settings):
 
 shutil.rmtree('SIR')
 
-for i in range(nb_of_different_simulation_settings):
+for i in range(nb_of_settings):
     partial_dataset_filepath = 'dataset_' + str(i) + '.npy'
     with open(partial_dataset_filepath, 'rb'):
         partial_dataset = np.load(dataset_filepath)
@@ -87,5 +94,5 @@ for i in range(nb_of_different_simulation_settings):
         final_dataset = np.concatenate((final_dataset, partial_dataset), axis=0)
     os.remove(partial_dataset_filepath)
 
-with open('SIR_dataset.npy', 'wb') as dataset_filepath:
+with open('SIR_dataset_upgraded.npy', 'wb') as dataset_filepath:
     np.save(dataset_filepath, final_dataset)

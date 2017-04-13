@@ -9,7 +9,7 @@ from keras.constraints import maxnorm
 from keras.callbacks import EarlyStopping
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
-from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MixtureOutputLayer
+from stochnet.classes.TopLayers import MultivariateLogNormalOutputLayer, MixtureOutputLayer
 
 
 def data():
@@ -49,28 +49,31 @@ def model(X_train, Y_train, X_test, Y_test):
     hidden1 = LSTM({{choice([64, 128, 256, 512, 1024, 1536, 2048])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}),
                    recurrent_constraint=maxnorm({{uniform(1, 3)}}))(input_tensor)
     dropout1 = Dropout({{uniform(0.2, 0.7)}})(hidden1)
-    NN_body = Dense({{choice([64, 128, 256, 512, 1024, 1536, 2048])}})(dropout1)
+    NN_body = Dense({{choice([64, 128, 256, 512, 1024, 1536, 2048])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(dropout1)
     dropout2 = Dropout({{uniform(0.2, 0.7)}})(NN_body)
-    NN_body = Dense({{choice([64, 128, 256, 512, 1024])}})(drouput2)
+    NN_body = Dense({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(dropout2)
 
-    number_of_components = 3
+    number_of_components = 2
     components = []
     for j in range(number_of_components):
-        components.append(MultivariateNormalCholeskyOutputLayer(3))
+        components.append(MultivariateLogNormalOutputLayer(3))
     TopModel_obj = MixtureOutputLayer(components)
 
     NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
+    callbacks = [EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min')]
     result = NN.fit(X_train, Y_train,
                     batch_size={{choice([512, 1024, 2048, 3072, 4096])}},
-                    epochs={{choice([25, 35, 45])}},
+                    epochs={{choice([10, 15, 20, 40])}},
                     verbose=2,
                     callbacks=callbacks,
                     validation_data=(X_test, Y_test))
-    val_loss = result.history['val_loss'][-1]
+    # TODO: avoid this additional computation: can't we find the index where EarlyStopping kicks in?
+    # val_loss = result.history['val_loss'][-1]
+    val_loss = NN.evaluate(X_data=X_test, y_data=Y_test, batch_size=512)
     parameters = space
     parameters["val_loss"] = val_loss
+    print('Validation loss: {0}'.format(val_loss))
 
     if 'results' not in globals():
         global results
@@ -80,10 +83,7 @@ def model(X_train, Y_train, X_test, Y_test):
     print(tabulate(results, headers="keys", tablefmt="fancy_grid", floatfmt=".8f"))
     with open('/home/lpalmier/workspace/output/SIR_model_tuning_05.json', 'w') as f:
         f.write(json.dumps(results))
-
-    loss = NN.evaluate(X_test, Y_test, verbose=0)
-    print('Test loss: {0}'.format(loss))
-    return {'loss': loss, 'status': STATUS_OK, 'model': NN.model}
+    return {'loss': val_loss, 'status': STATUS_OK, 'model': NN.model}
 
 
 if __name__ == '__main__':

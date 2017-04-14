@@ -76,3 +76,9 @@ class StochNeuralNetwork:
         slicing_size = min(batch_size, M)
         first_M_predictions = tf.slice(NN_prediction, [0, 0], [slicing_size, -1])
         return first_M_predictions
+
+    def save(self, filepath):
+        self.model.save(filepath)
+        return
+
+    # TO-DO: save the whole class instance, instead of simply saving the Keras/TF model

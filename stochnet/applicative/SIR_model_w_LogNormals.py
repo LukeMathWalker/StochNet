@@ -43,15 +43,19 @@ for j in range(number_of_components):
 TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
-callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, epochs=4, validation_split=0.2, callbacks=callbacks)
+callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
+NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=20, validation_split=0.2, callbacks=callbacks)
 
 test_set_prediction = NN.predict(dataset.X_test)
 NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction,
                                      max_display=2, fitted_scaler=dataset.scaler,
                                      feature_labels=dataset.labels)
 
-test_dataset = TimeSeriesDataset(dataset_address, labels=data_labels)
+test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded.npy')
+test_dataset = TimeSeriesDataset(test_dataset_address, labels=data_labels)
 test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
 test_loss = NN.evaluate(X_data=test_dataset.X_train, y_data=test_dataset.y_train, batch_size=512)
-print('Validation loss: {0}'.format(test_loss))
+print('Test loss: {0}'.format(test_loss))
+
+filepath_for_saving = os.path.join(basename, 'models/SIR_' + str(test_loss) + '.h5')
+NN.save(filepath_for_saving)

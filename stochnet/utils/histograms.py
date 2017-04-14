@@ -1,3 +1,7 @@
+import numpy as np
+from numpy.linalg import norm
+
+
 def histogram_distance(h_X, h_Y, interval_length):
     histogram_distance = norm(h_X - h_Y, ord=1) * interval_length
     return histogram_distance

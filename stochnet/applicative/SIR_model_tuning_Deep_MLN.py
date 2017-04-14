@@ -52,7 +52,7 @@ def model(X_train, Y_train, X_test, Y_test):
         - model: specify the model just created so that we can later use it again.
     """
     input_tensor = Input(shape=(5, 3))
-    hidden1 = LSTM({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}),
+    hidden1 = LSTM({{choice([64, 128, 256, 512, 1024])}}, return_sequences=True, kernel_constraint=maxnorm({{uniform(1, 3)}}),
                    recurrent_constraint=maxnorm({{uniform(1, 3)}}))(input_tensor)
     dropout1 = Dropout({{uniform(0.2, 0.7)}})(hidden1)
     hidden2 = LSTM({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}),

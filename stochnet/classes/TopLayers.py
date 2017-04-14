@@ -83,7 +83,7 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
             raise ValueError('''We can't define a Categorical random variable is there isn't at least one class!''')
 
     def add_layer_on_top(self, base_model):
-        logits_on_top = Dense(self._number_of_classes, activation=None)(base_model)
+        logits_on_top = Dense(self._number_of_classes, activation=None, name="CategoricalOutputLayer")(base_model)
         return logits_on_top
 
     def get_tensor_random_variable(self, NN_prediction):
@@ -130,7 +130,7 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
         mu = Dense(self._sample_space_dimension, activation=None)(base_model)
         chol_diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
         chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)(base_model)
-        return concatenate([mu, chol_diag, chol_sub_diag], axis=-1)
+        return concatenate([mu, chol_diag, chol_sub_diag], axis=-1, name="MultivariateNormalCholeskyOutputLayer")
 
     def get_tensor_random_variable(self, NN_prediction):
         self.check_NN_prediction_shape(NN_prediction)
@@ -202,7 +202,7 @@ class MultivariateLogNormalOutputLayer(RandomVariableOutputLayer):
         normal_mean = Dense(self._sample_space_dimension, activation=None)(base_model)
         normal_chol_diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
         normal_chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)(base_model)
-        return concatenate([normal_mean, normal_chol_diag, normal_chol_sub_diag], axis=-1)
+        return concatenate([normal_mean, normal_chol_diag, normal_chol_sub_diag], axis=-1, name="MultivariateLogNormalOutputLayer")
 
     def get_tensor_random_variable(self, NN_prediction):
         self.check_NN_prediction_shape(NN_prediction)
@@ -282,7 +282,7 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
         categorical_layer = self.categorical.add_layer_on_top(base_model)
         components_layers = [component.add_layer_on_top(base_model) for component in self.components]
         mixture_layers = [categorical_layer] + components_layers
-        return concatenate(mixture_layers, axis=-1)
+        return concatenate(mixture_layers, axis=-1, name="MixtureOutputLayer")
 
     def get_tensor_random_variable(self, NN_prediction):
         self.check_NN_prediction_shape(NN_prediction)

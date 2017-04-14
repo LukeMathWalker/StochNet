@@ -55,9 +55,12 @@ def model(X_train, Y_train, X_test, Y_test):
     hidden1 = LSTM({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}),
                    recurrent_constraint=maxnorm({{uniform(1, 3)}}))(input_tensor)
     dropout1 = Dropout({{uniform(0.2, 0.7)}})(hidden1)
-    NN_body = Dense({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(dropout1)
-    dropout2 = Dropout({{uniform(0.2, 0.7)}})(NN_body)
+    hidden2 = LSTM({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}),
+                   recurrent_constraint=maxnorm({{uniform(1, 3)}}))(dropout1)
+    dropout2 = Dropout({{uniform(0.2, 0.7)}})(hidden2)
     NN_body = Dense({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(dropout2)
+    dropout3 = Dropout({{uniform(0.2, 0.7)}})(NN_body)
+    NN_body = Dense({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(dropout3)
 
     number_of_components = 2
     components = []
@@ -87,7 +90,7 @@ def model(X_train, Y_train, X_test, Y_test):
 
     results.append(parameters)
     print(tabulate(results, headers="keys", tablefmt="fancy_grid", floatfmt=".8f"))
-    with open('/home/lpalmier/workspace/output/SIR/SIR_model_tuning_F_01.json', 'w') as f:
+    with open('/home/lpalmier/workspace/output/SIR/SIR_model_tuning_Deep_MLN_01.json', 'w') as f:
         f.write(json.dumps(results))
     return {'loss': val_loss, 'status': STATUS_OK, 'model': NN.model}
 

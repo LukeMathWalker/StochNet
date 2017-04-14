@@ -81,4 +81,10 @@ class StochNeuralNetwork:
         self.model.save(filepath)
         return
 
+    def load_weights(self, filepath):
+        self.model.load_weights(filepath)
+        self.model.compile(optimizer='adam',
+                           loss=self.TopLayer_obj.loss_function)
+        return
+
     # TO-DO: save the whole class instance, instead of simply saving the Keras/TF model

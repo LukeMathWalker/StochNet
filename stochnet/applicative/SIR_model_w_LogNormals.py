@@ -20,7 +20,7 @@ import tensorflow as tf
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
-dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_2.npy')
+dataset_address = os.path.join(basename, 'dataset/SIR_dataset.npy')
 test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_3.npy')
 
 data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
@@ -35,9 +35,9 @@ test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
 hidden1 = LSTM(64, kernel_constraint=maxnorm(2.22175262), recurrent_constraint=maxnorm(2.47433967))(input_tensor)
 dropout1 = Dropout(0.46178651)(hidden1)
-dense1 = Dense(128, kernel_constraint=maxnorm(2.30359363))(dropout1)
+dense1 = Dense(64, kernel_constraint=maxnorm(2.30359363))(dropout1)
 dropout2 = Dropout(0.62220663)(dense1)
-NN_body = Dense(512, kernel_constraint=maxnorm(1.87423252))(dropout2)
+NN_body = Dense(64, kernel_constraint=maxnorm(1.87423252))(dropout2)
 
 number_of_components = 2
 components = []
@@ -48,15 +48,14 @@ TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=2, validation_split=0.2, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
+result = NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=2, validation_split=0.2, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
+lowest_val_loss = min(result.history['val_loss'])
+print(lowest_val_loss)
 
 test_set_prediction = NN.predict(test_dataset.X_train)
 NN.visualize_performance_by_sampling(test_dataset.X_train, test_dataset.y_train, test_set_prediction,
                                      max_display=4, fitted_scaler=dataset.scaler,
                                      feature_labels=dataset.labels)
 
-test_loss = NN.evaluate(X_data=test_dataset.X_train, y_data=test_dataset.y_train, batch_size=512)
-print('Test loss: {0}'.format(test_loss))
-
-filepath_for_saving = os.path.join(basename, 'models/SIR_' + str(test_loss) + '.h5')
+filepath_for_saving = os.path.join(basename, 'models/SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath_for_saving)

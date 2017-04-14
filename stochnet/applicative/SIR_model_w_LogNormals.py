@@ -21,7 +21,7 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_2.npy')
-test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded.npy')
+test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_3.npy')
 
 data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
 
@@ -48,11 +48,11 @@ TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
-NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=2, validation_split=0.2, callbacks=callbacks)
+NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=2, validation_split=0.2, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
 
-test_set_prediction = NN.predict(dataset.X_test)
-NN.visualize_performance_by_sampling(dataset.X_test, dataset.y_test, test_set_prediction,
-                                     max_display=2, fitted_scaler=dataset.scaler,
+test_set_prediction = NN.predict(test_dataset.X_train)
+NN.visualize_performance_by_sampling(test_dataset.X_train, test_dataset.y_train, test_set_prediction,
+                                     max_display=4, fitted_scaler=dataset.scaler,
                                      feature_labels=dataset.labels)
 
 test_loss = NN.evaluate(X_data=test_dataset.X_train, y_data=test_dataset.y_train, batch_size=512)

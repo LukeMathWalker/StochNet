@@ -22,16 +22,22 @@ def data():
     current = os.getcwd()
     working_path = os.path.dirname(current)
     basename = os.path.abspath(working_path)
-    dataset_address = os.path.join(basename, 'dataset/SIR_dataset.npy')
-    dataset = TimeSeriesDataset(dataset_address)
+    dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_2.npy')
+    test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_3.npy')
+
+    data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
+
+    dataset = TimeSeriesDataset(dataset_address, labels=data_labels)
+    test_dataset = TimeSeriesDataset(test_dataset_address, labels=data_labels)
 
     nb_past_timesteps = 5
-    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, percentage_of_test_data=0.25, positivity="needed")
+    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
+    test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
 
     X_train = dataset.X_train
-    X_test = dataset.X_test
+    X_test = test_dataset.X_train
     Y_train = dataset.y_train
-    Y_test = dataset.y_test
+    Y_test = test_dataset.y_train
     return X_train, Y_train, X_test, Y_test
 
 

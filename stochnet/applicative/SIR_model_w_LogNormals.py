@@ -33,11 +33,11 @@ dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_resca
 test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
 
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
-hidden1 = LSTM(64, kernel_constraint=maxnorm(2.22175262), recurrent_constraint=maxnorm(2.47433967))(input_tensor)
+hidden1 = LSTM(128, kernel_constraint=maxnorm(1.78998725), recurrent_constraint=maxnorm(2.95163704))(input_tensor)
 dropout1 = Dropout(0.46178651)(hidden1)
-dense1 = Dense(64, kernel_constraint=maxnorm(2.30359363))(dropout1)
+dense1 = Dense(512, kernel_constraint=maxnorm(1.57732507))(dropout1)
 dropout2 = Dropout(0.62220663)(dense1)
-NN_body = Dense(64, kernel_constraint=maxnorm(1.87423252))(dropout2)
+NN_body = Dense(128, kernel_constraint=maxnorm(1.67525276))(dropout2)
 
 number_of_components = 2
 components = []
@@ -48,7 +48,7 @@ TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
-result = NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=2, validation_split=0.2, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
+result = NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=20, validation_split=0.2, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
 lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 

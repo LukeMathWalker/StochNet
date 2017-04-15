@@ -1,13 +1,10 @@
 import os
-from tensorflow.python import debug as tf_debug
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MultivariateLogNormalOutputLayer, MixtureOutputLayer
 from keras.layers import Input, LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
 from keras.constraints import maxnorm
-from keras import backend as K
-import tensorflow as tf
 
 # sess = tf.Session()
 # sess = tf_debug.LocalCLIDebugWrapperSession(sess)

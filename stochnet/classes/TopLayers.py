@@ -28,14 +28,17 @@ class RandomVariableOutputLayer(abc.ABC):
         """
 
     @abc.abstractmethod
-    def sample(self, NN_prediction):
+    def sample(self, NN_prediction, sess = None):
         """Get tensor random random variable correspinding to the parameters provided by
         NN_prediction and sample from those.
         The method returns a numpy array with the following shape:
         [number_of_samples, self.sample_space_dimension]"""
         self.check_NN_prediction_shape(NN_prediction)
-        with tf.Session():
-            samples = self.get_tensor_random_variable(NN_prediction).sample().eval()
+        if sess is None:
+            with tf.Session():
+                samples = self.get_tensor_random_variable(NN_prediction).sample().eval()
+        else:
+            sess.run(self.get_tensor_random_variable(NN_prediction).sample())
         return samples
 
     @abc.abstractmethod
@@ -90,8 +93,8 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
         self.check_NN_prediction_shape(NN_prediction)
         return Categorical(NN_prediction)
 
-    def sample(self, NN_prediction):
-        return super().sample(NN_prediction)
+    def sample(self, NN_prediction, sess=None):
+        return super().sample(NN_prediction, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)
@@ -141,8 +144,8 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
             cholesky = self.batch_to_lower_triangular_matrix(cholesky_diag, cholesky_sub_diag)
         return MultivariateNormalCholesky(mu, cholesky)
 
-    def sample(self, NN_prediction, max_number_of_samples=10):
-        return super().sample(NN_prediction, max_number_of_samples=max_number_of_samples)
+    def sample(self, NN_prediction, sess=None):
+        return super().sample(NN_prediction, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)
@@ -213,8 +216,8 @@ class MultivariateLogNormalOutputLayer(RandomVariableOutputLayer):
             normal_cholesky = self.batch_to_lower_triangular_matrix(normal_cholesky_diag, normal_cholesky_sub_diag)
         return MultivariateLogNormal(normal_mean, normal_cholesky)
 
-    def sample(self, NN_prediction, max_number_of_samples=10):
-        return super().sample(NN_prediction, max_number_of_samples=max_number_of_samples)
+    def sample(self, NN_prediction, sess=None):
+        return super().sample(NN_prediction, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)
@@ -297,8 +300,8 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
             start_slicing_index += component.number_of_output_neurons
         return Mixture(categorical_random_variable, components_random_variable)
 
-    def sample(self, NN_prediction):
-        return super().sample(NN_prediction)
+    def sample(self, NN_prediction, sess=None):
+        return super().sample(NN_prediction, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)

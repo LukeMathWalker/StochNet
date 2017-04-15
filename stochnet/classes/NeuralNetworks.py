@@ -66,7 +66,8 @@ class StochNeuralNetwork:
             # TODO: improve formatting
 
     def sample(self, NN_prediction, max_number_of_samples=10):
-        # TODO: add inverse scaling and labels. Refactor
+        # TODO: add inverse scaling and labels.
+        # Rewrite it
         to_be_used_for_sampling = self.get_first_M_predictions(NN_prediction, max_number_of_samples)
         samples = self.TopLayer_obj.sample(to_be_used_for_sampling)
         return samples

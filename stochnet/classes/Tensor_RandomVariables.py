@@ -12,8 +12,8 @@ class Categorical:
         self.distribution_obj = tf_Categorical(logits=logits, validate_args=validate_args)
         self.number_of_classes = self.distribution_obj.num_classes
 
-    def sample(self):
-        return self.distribution_obj.sample()
+    def sample(self, sample_shape=()):
+        return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
@@ -51,8 +51,8 @@ class MultivariateNormalCholesky:
     def sample_space_dimension(self):
         return self.distribution_obj.get_event_shape().as_list()[0]
 
-    def sample(self):
-        return self.distribution_obj.sample()
+    def sample(self, sample_shape=()):
+        return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
@@ -90,8 +90,8 @@ class MultivariateLogNormal:
     def sample_space_dimension(self):
         return self.distribution_obj.get_event_shape().as_list()[0]
 
-    def sample(self):
-        return self.distribution_obj.sample()
+    def sample(self, sample_shape=()):
+        return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
@@ -164,8 +164,8 @@ class Mixture:
     def log_prob(self, value):
         return self.distribution_obj.log_prob(value)
 
-    def sample(self):
-        return self.distribution_obj.sample()
+    def sample(self, sample_shape=()):
+        return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):

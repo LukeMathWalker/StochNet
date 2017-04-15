@@ -38,7 +38,7 @@ class RandomVariableOutputLayer(abc.ABC):
             with tf.Session():
                 samples = self.get_tensor_random_variable(NN_prediction).sample().eval()
         else:
-            sess.run(self.get_tensor_random_variable(NN_prediction).sample())
+            samples = sess.run(self.get_tensor_random_variable(NN_prediction).sample())
         return samples
 
     @abc.abstractmethod

@@ -16,21 +16,22 @@ class StochNeuralNetwork:
     def fit(self, X_data, y_data, batch_size=32, epochs=10, verbose=1,
             callbacks=None, validation_split=0.0, validation_data=None):
         return self.model.fit(X_data,
-                       y_data,
-                       batch_size=batch_size,
-                       epochs=epochs,
-                       callbacks=callbacks,
-                       validation_split=validation_split,
-                       validation_data=validation_data)
+                              y_data,
+                              batch_size=batch_size,
+                              epochs=epochs,
+                              callbacks=callbacks,
+                              validation_split=validation_split,
+                              validation_data=validation_data)
 
     def fit_generator(self, training_generator, samples_per_epoch, epochs=5, verbose=1, callbacks=None, validation_generator=None, nb_val_samples=100):
         return self.model.fit_generator(generator=training_generator,
-                                 samples_per_epoch=samples_per_epoch,
-                                 epochs=epochs,
-                                 verbose=verbose,
-                                 callbacks=callbacks,
-                                 validation_data=validation_generator,
-                                 nb_val_samples=nb_val_samples)
+                                        samples_per_epoch=samples_per_epoch,
+                                        epochs=epochs,
+                                        verbose=verbose,
+                                        callbacks=callbacks,
+                                        validation_data=validation_generator,
+                                        nb_val_samples=nb_val_samples)
+#        fit_generator(self, generator, steps_per_epoch, epochs=1, verbose=1, callbacks=None, validation_data=None, validation_steps=None, class_weight=None, max_q_size=10, workers=1, pickle_safe=False, initial_epoch=0)
 
     def predict(self, X_data, batch_size=32, verbose=0):
         return self.model.predict(X_data, batch_size=batch_size, verbose=verbose)

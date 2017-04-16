@@ -17,8 +17,8 @@ from keras.constraints import maxnorm
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
-dataset_address = os.path.join(basename, 'dataset/SIR_dataset.npy')
-test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded_3.npy')
+dataset_address = os.path.join(basename, 'dataset/SIR_dataset_big.npy')
+test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded.npy')
 
 data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
 
@@ -26,8 +26,8 @@ dataset = TimeSeriesDataset(dataset_address, labels=data_labels)
 test_dataset = TimeSeriesDataset(test_dataset_address, labels=data_labels)
 
 nb_past_timesteps = 5
-dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
-test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed', percentage_of_test_data=0)
+dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, percentage_of_test_data=0)
+test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, percentage_of_test_data=0)
 
 input_tensor = Input(shape=(nb_past_timesteps, dataset.nb_features))
 hidden1 = LSTM(128, kernel_constraint=maxnorm(1.78998725), recurrent_constraint=maxnorm(2.95163704))(input_tensor)
@@ -39,13 +39,13 @@ NN_body = Dense(128, kernel_constraint=maxnorm(1.67525276))(dropout2)
 number_of_components = 2
 components = []
 for j in range(number_of_components):
-    components.append(MultivariateLogNormalOutputLayer(dataset.nb_features))
+    components.append(MultivariateNormalCholeskyOutputLayer(dataset.nb_features))
 
 TopModel_obj = MixtureOutputLayer(components)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='min')]
-result = NN.fit(dataset.X_train, dataset.y_train, batch_size=1024, epochs=20, validation_split=0.2, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
+result = NN.fit(dataset.X_train, dataset.y_train, batch_size=512, epochs=20, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
 lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 

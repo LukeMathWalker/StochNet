@@ -2,7 +2,7 @@ import os
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MultivariateLogNormalOutputLayer, MixtureOutputLayer
-from utils.iterator import NumpyArrayIterator
+from stochnet.utils.iterator import NumpyArrayIterator
 from keras.layers import Input, LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
 from keras.constraints import maxnorm
@@ -18,7 +18,7 @@ from keras.constraints import maxnorm
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
-dataset_address = os.path.join(basename, 'dataset/SIR_dataset_big.npy')
+dataset_address = os.path.join(basename, 'dataset/SIR_dataset_medium.npy')
 test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded.npy')
 
 data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}

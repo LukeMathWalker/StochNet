@@ -87,7 +87,7 @@ shutil.rmtree('SIR')
 for i in range(nb_of_settings):
     partial_dataset_filepath = 'dataset_' + str(i) + '.npy'
     with open(partial_dataset_filepath, 'rb'):
-        partial_dataset = np.load(dataset_filepath)
+        partial_dataset = np.load(partial_dataset_filepath)
     if i == 0:
         final_dataset = partial_dataset
     else:

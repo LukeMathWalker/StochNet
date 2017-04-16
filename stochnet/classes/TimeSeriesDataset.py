@@ -1,6 +1,7 @@
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from stochnet.classes.Errors import ShapeError
+from keras import backend as K
 import numpy as np
 from bidict import bidict
 
@@ -13,7 +14,7 @@ class TimeSeriesDataset:
         # if with_timestamps is True the corresponding column is labeled
         # "Timestamps" indipendently of the desired user label
         with open(dataset_address, 'rb') as data_file:
-            self.data = np.load(data_file)
+            self.data = np.asarray(np.load(data_file), dtype=K.floatx())
         self.memorize_dataset_shape()
         self.rescaled = False
         self.with_timestamps = with_timestamps

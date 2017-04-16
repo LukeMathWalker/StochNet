@@ -90,8 +90,8 @@ class TimeSeriesDataset:
                 y_placeholder = self.data[trajectory, oldest_timestep + nb_past_timesteps, :]
                 X_data.append(X_placeholder)
                 y_data.append(y_placeholder)
-        self.X_data = np.array(X_data)
-        self.y_data = np.array(y_data)
+        self.X_data = np.array(X_data, dtype=K.floatx())
+        self.y_data = np.array(y_data, dtype=K.floatx())
 
     def check_if_nb_past_timesteps_is_valid(self, nb_past_timesteps):
         if nb_past_timesteps + 1 > self.nb_timesteps:

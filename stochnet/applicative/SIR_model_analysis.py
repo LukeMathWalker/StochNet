@@ -18,8 +18,8 @@ from keras.constraints import maxnorm
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
-dataset_address = os.path.join(basename, 'dataset/SIR_dataset_medium.npy')
-test_dataset_address = os.path.join(basename, 'dataset/SIR_dataset_upgraded.npy')
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03.npy'
+test_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04.npy'
 
 data_labels = {'Timestamps': 0, 'Susceptible': 1, 'Infected': 2, 'Removed': 3}
 
@@ -28,7 +28,7 @@ test_dataset = TimeSeriesDataset(test_dataset_address, labels=data_labels)
 
 nb_past_timesteps = 5
 dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, percentage_of_test_data=0)
-test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, percentage_of_test_data=0)
+test_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, percentage_of_test_data=0.75)
 
 training_generator = NumpyArrayIterator(dataset.X_train, dataset.y_train, batch_size=512, shuffle=False)
 validation_generator = NumpyArrayIterator(test_dataset.X_train, test_dataset.y_train, batch_size=512, shuffle=False)

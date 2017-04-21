@@ -126,7 +126,7 @@ class HDF5Iterator(Iterator):
                              'should have the same length. '
                              'Found: X.shape = %s, y.shape = %s' %
                              (self.x.shape, self.y.shape))
-        super(NumpyArrayIterator, self).__init__(self.x.shape[0], batch_size, shuffle, seed)
+        super(HDF5Iterator, self).__init__(self.x.shape[0], batch_size, shuffle, seed)
 
     def next(self):
         """For python 2.x.

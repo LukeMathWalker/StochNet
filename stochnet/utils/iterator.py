@@ -145,5 +145,6 @@ class HDF5Iterator(Iterator):
             batch_x[i] = x
         if self.y is None:
             return batch_x
+        print(index_array)
         batch_y = self.y[index_array]
         return batch_x, batch_y

@@ -1,5 +1,6 @@
 import h5py
-
+import numpy as np
+np.set_printoptions(precision=3, suppress=True)
 
 f = h5py.File('/home/lucap/Documenti/Data storage/SIR_dataset_medium.hdf5', 'r')
 print('Using .values():')
@@ -12,5 +13,7 @@ print(X_dst.shape)
 y_dst = f['y_data']
 print('y data shape:')
 print(y_dst.shape)
-print('First 10^6 X datapoints:')
-print(X_dst[:1000000, ...])
+print('First 10^2 X datapoints:')
+print(X_dst[:100, ...])
+print('First 10^2 y datapoints:')
+print(y_dst[:100, ...])

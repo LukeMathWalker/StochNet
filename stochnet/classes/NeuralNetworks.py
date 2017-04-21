@@ -36,6 +36,16 @@ class StochNeuralNetwork:
     def predict(self, X_data, batch_size=32, verbose=0):
         return self.model.predict(X_data, batch_size=batch_size, verbose=verbose)
 
+    def predict_generator(self, generator, steps, max_q_size=10, workers=1, pickle_safe=False, verbose=0):
+        return self.model.predict_generator(generator, steps,
+                                            max_q_size=max_q_size,
+                                            workers=workers,
+                                            pickle_safe=pickle_safe,
+                                            verbose=verbose)
+
+    def predict_on_batch(self, x):
+        return self.model.predict_on_batch(x)
+
     def evaluate(self, X_data, y_data, batch_size=32, verbose=1, sample_weight=None):
         return self.model.evaluate(X_data, y_data, batch_size=batch_size,
                                    verbose=verbose, sample_weight=sample_weight)

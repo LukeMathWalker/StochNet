@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.random import randint
 from stochnet.utils.histograms import histogram_distance, get_histogram
-from keras.layers import Input, LSTM, Dense, Dropout
+from keras.layers import Input, LSTM, Dense, Dropout, Flatten
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
-from stochnet.classes.TopLayers import MultivariateLogNormalOutputLayer, MixtureOutputLayer
+from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MixtureOutputLayer
 from keras.constraints import maxnorm
 import os
 import stochpy
@@ -100,16 +100,13 @@ def get_endtime_state(data):
 
 def get_NN(nb_past_timesteps, nb_features):
     input_tensor = Input(shape=(nb_past_timesteps, nb_features))
-    hidden1 = LSTM(128, kernel_constraint=maxnorm(1.78998725), recurrent_constraint=maxnorm(2.95163704))(input_tensor)
-    dropout1 = Dropout(0.46178651)(hidden1)
-    dense1 = Dense(512, kernel_constraint=maxnorm(1.57732507))(dropout1)
-    dropout2 = Dropout(0.62220663)(dense1)
-    NN_body = Dense(128, kernel_constraint=maxnorm(1.67525276))(dropout2)
+    flatten1 = Flatten()(input_tensor)
+    NN_body = Dense(2048, kernel_constraint=maxnorm(1.67525276))(flatten1)
 
     number_of_components = 2
     components = []
     for j in range(number_of_components):
-        components.append(MultivariateLogNormalOutputLayer(nb_features))
+        components.append(MultivariateNormalCholeskyOutputLayer(nb_features))
 
     TopModel_obj = MixtureOutputLayer(components)
 
@@ -121,7 +118,7 @@ def get_model_weights_filepath():
     current = os.getcwd()
     working_path = os.path.dirname(current)
     basename = os.path.abspath(working_path)
-    weights_filepath = os.path.join(basename, 'models/SIR_-6.19755435123.h5')
+    weights_filepath = os.path.join(basename, 'models/SIR_-6.66034390926.h5')
     return weights_filepath
 
 
@@ -136,7 +133,7 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
 
 nb_of_trajectories_for_hist = 10**2
 nb_of_initial_configurations = 2
-nb_past_timesteps = 5
+nb_past_timesteps = 1
 time_step_size = 2**(-6)
 initial_sequence_endtime = (nb_past_timesteps - 1) * time_step_size
 initial_sequences = generate_initial_sequences(initial_sequence_endtime, nb_of_initial_configurations, time_step_size)
@@ -147,6 +144,8 @@ NN.model.load_weights(weights_filepath)
 
 for i in range(nb_of_initial_configurations):
     NN_prediction = NN.predict(initial_sequences[i][np.newaxis, :, 1:])
+    print(NN.TopLayer_obj.get_description(NN_prediction)[0])
+    print(len(NN.TopLayer_obj.get_description(NN_prediction)))
     NN_samples = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
     print(NN_samples.shape)
     S_samples_NN = NN_samples[:, 0, 1]

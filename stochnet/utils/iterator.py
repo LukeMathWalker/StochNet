@@ -145,7 +145,6 @@ class HDF5Iterator(Iterator):
             batch_x[i] = x
         if self.y is None:
             return batch_x
-        print(index_array)
         batch_y = np.zeros(tuple([current_batch_size] + list(self.y.shape)[1:]), dtype=K.floatx())
         for i, j in enumerate(index_array):
             y = self.y[j]

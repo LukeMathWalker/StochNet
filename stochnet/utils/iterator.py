@@ -1,4 +1,5 @@
 import numpy as np
+import h5py
 import threading
 from keras import backend as K
 
@@ -106,28 +107,26 @@ class HDF5Iterator(Iterator):
     # TODO: finish
     """Iterator yielding data from a Numpy array.
     # Arguments
-        x_filepath: address leading to the hdf5 file containing input data.
-        y_filepath: Naddress leading to the hdf5 file containing target data.
+        filepath: address leading to the hdf5 file. We assume that the input
+            data can be retrieved using f['X_data'] and that the target data
+            can be retrieved using f['y_data'].
         batch_size: Integer, size of a batch.
         shuffle: Boolean, whether to shuffle the data between epochs.
         seed: Random seed for data shuffling.
     """
 
-    def __init__(self, x_filepath, y_filepath,
+    def __init__(self, filepath,
                  batch_size=32, shuffle=False, seed=None):
-        if y is not None and len(x) != len(y):
+        self.f = h5py.File(str(filepath), 'a')
+        self.x = self.f['X_data']
+        self.y = self.f['y_data']
+        # TODO: aggiungi la possibilità di non inserire target data
+        if self.y is not None and len(self.x) != len(self.y):
             raise ValueError('X and y '
                              'should have the same length. '
                              'Found: X.shape = %s, y.shape = %s' %
-                             (np.asarray(x).shape, np.asarray(y).shape))
-
-        self.x = np.asarray(x, dtype=K.floatx())
-
-        if y is not None:
-            self.y = np.asarray(y)
-        else:
-            self.y = None
-        super(NumpyArrayIterator, self).__init__(x.shape[0], batch_size, shuffle, seed)
+                             (self.x.shape, self.y.shape))
+        super(NumpyArrayIterator, self).__init__(self.x.shape[0], batch_size, shuffle, seed)
 
     def next(self):
         """For python 2.x.

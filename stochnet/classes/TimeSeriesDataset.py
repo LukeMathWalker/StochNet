@@ -80,7 +80,7 @@ class TimeSeriesDataset:
                 self.labels.pop('timestamps')
         # FIX: other labels indexes need to be diminished by 1
 
-    def rescale(self, positivity):
+    def rescale(self, positivity=None):
         if self.rescaled is False:
             if positivity == 'needed':
                 positive_eps = 2**(-25)
@@ -97,16 +97,22 @@ class TimeSeriesDataset:
                 nb_iteration = self.nb_trajectories // slice_size
                 for i in range(nb_iteration):
                     data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
-                    self.scaler.partial_fit(X=data_slice)
+                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+                    self.scaler.partial_fit(X=flat_data_slice)
                 if nb_iteration * slice_size != self.nb_trajectories:
                     data_slice = self.data[nb_iteration * slice_size:, ...]
-                    self.scaler.partial_fit(X=data_slice)
+                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+                    self.scaler.partial_fit(X=flat_data_slice)
                 for i in range(nb_iteration):
                     data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
-                    self.scaler.transform(X=data_slice)
+                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+                    self.scaler.transform(X=flat_data_slice)
+                    self.data[i * slice_size: (i + 1) * slice_size, ...] = flat_data_slice.reshape(-1, self.nb_timesteps, self.nb_features)
                 if nb_iteration * slice_size != self.nb_trajectories:
                     data_slice = self.data[nb_iteration * slice_size:, ...]
-                    self.scaler.transform(X=data_slice)
+                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+                    self.scaler.transform(X=flat_data_slice)
+                    self.data[nb_iteration * slice_size:, ...] = flat_data_slice.reshape(-1, self.nb_timesteps, self.nb_features)
             self.rescaled = True
 
     def explode_into_training_pieces(self, nb_past_timesteps):

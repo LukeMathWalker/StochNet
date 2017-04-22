@@ -28,7 +28,7 @@ class TimeSeriesDataset:
                 self.data = np.asarray(np.load(data_file), dtype=K.floatx())
         elif data_format == 'hdf5':
             self.f_raw_data = h5py.File(str(dataset_address), 'a')
-            self.data = self.f['data']
+            self.data = self.f_raw_data['data']
         else:
             raise TypeError('''Unsupported data format. .npy and .hdf5 are\n
                                 the available data formats.''')

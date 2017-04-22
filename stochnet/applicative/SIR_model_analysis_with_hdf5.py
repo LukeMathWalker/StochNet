@@ -39,18 +39,18 @@ input_tensor = Input(shape=(nb_past_timesteps, nb_features))
 # NN_body = Dense(256, kernel_constraint=maxnorm(1.67525276))(dropout2)
 flatten1 = Flatten()(input_tensor)
 NN_body = Dense(2048, kernel_constraint=maxnorm(1.67525276))(flatten1)
-number_of_components = 2
-components = []
-for j in range(number_of_components):
-    components.append(MultivariateNormalCholeskyOutputLayer(nb_features))
-
-TopModel_obj = MixtureOutputLayer(components)
-
+# number_of_components = 2
+# components = []
+# for j in range(number_of_components):
+#     components.append(MultivariateNormalCholeskyOutputLayer(nb_features))
+#
+# TopModel_obj = MixtureOutputLayer(components)
+TopModel_obj = MultivariateNormalCholeskyOutputLayer(nb_features)
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=7, verbose=1, mode='min')]
 # result = NN.fit(dataset.X_train, dataset.y_train, batch_size=512, epochs=20, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
 result = NN.fit_generator(training_generator=training_generator,
-                          samples_per_epoch=10**2, epochs=1, verbose=1,
+                          samples_per_epoch=10**5, epochs=3, verbose=1,
                           callbacks=callbacks, validation_generator=validation_generator,
                           nb_val_samples=10**2)
 lowest_val_loss = min(result.history['val_loss'])
@@ -61,10 +61,10 @@ NN.save(filepath)
 NN_loaded = StochNeuralNetwork.load(filepath)
 print(NN_loaded)
 
-# test_batch_x, test_batch_y = next(validation_generator)
-# test_batch_prediction = NN.predict_on_batch(test_batch_x)
-# NN.visualize_performance_by_sampling(test_batch_x, test_batch_y, test_batch_prediction,
-#                                      max_display=6)
-#
+test_batch_x, test_batch_y = next(validation_generator)
+test_batch_prediction = NN.predict_on_batch(test_batch_x)
+NN.visualize_performance_by_sampling(test_batch_x, test_batch_y, test_batch_prediction,
+                                     max_display=6)
+
 # filepath_for_saving = os.path.join(basename, 'models/SIR_' + str(lowest_val_loss) + '.h5')
 # NN.save(filepath_for_saving)

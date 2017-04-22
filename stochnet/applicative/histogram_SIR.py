@@ -13,7 +13,7 @@ import tensorflow as tf
 
 
 def generate_initial_sequences(endtime, nb_of_initial_sequences, time_step_for_resampling):
-    print('INITIAL SEQUENCES: GENERATING')
+    print('INITIAL SEQUENCES - GENERATING')
     simulation_settings = generate_simulation_settings(nb_of_settings=nb_of_initial_sequences)
     initial_sequences = SSA_simulation(simulation_settings[0], endtime, 1, time_step_for_resampling)
     for i in range(1, nb_of_initial_sequences):
@@ -130,7 +130,7 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
     #     samples = np.concatenate((samples, sample), axis=0)
     return samples
 
-# MANCA LO SCALINGGGGG!!!!!!
+
 nb_of_trajectories_for_hist = 10**2
 nb_of_initial_configurations = 2
 nb_past_timesteps = 1
@@ -138,30 +138,31 @@ time_step_size = 2**(-6)
 initial_sequence_endtime = (nb_past_timesteps - 1) * time_step_size
 initial_sequences = generate_initial_sequences(initial_sequence_endtime, nb_of_initial_configurations, time_step_size)
 
-NN = get_NN(nb_past_timesteps, 3)
-weights_filepath = get_model_weights_filepath()
-NN.model.load_weights(weights_filepath)
+# NN = get_NN(nb_past_timesteps, 3)
+# weights_filepath = get_model_weights_filepath()
+# NN.model.load_weights(weights_filepath)
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/dill_test_SIR_-5.82269514084.h5'
+NN = StochNeuralNetwork.load(model_filepath)
 
-for i in range(nb_of_initial_configurations):
-    NN_prediction = NN.predict(initial_sequences[i][np.newaxis, :, 1:])
-    print(NN.TopLayer_obj.get_description(NN_prediction)[0])
-    print(len(NN.TopLayer_obj.get_description(NN_prediction)))
-    NN_samples = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
-    print(NN_samples.shape)
-    S_samples_NN = NN_samples[:, 0, 1]
-    S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
-    print(S_NN_hist)
-
-    SSA_initial_state = get_endtime_state(initial_sequences[i])
-    print("Initial state:")
-    print(SSA_initial_state)
-    simulation_setting = {'S': SSA_initial_state[0], 'I': SSA_initial_state[1], 'R': SSA_initial_state[2]}
-    endtime = time_step_size
-
-    trajectories = SSA_simulation(simulation_setting, endtime, nb_of_trajectories_for_hist, time_step_size)
-    # trajectories: [trajectory, timestep, timestamp+features]
-    # timestamps: [trajectory, timestep, 0]
-    # proper feature: [trajectory, timestep, 1:]
-    S_samples_SSA = trajectories[:, -1, 1]
-    S_SSA_hist = get_histogram(S_samples_SSA, 0.5, 200.5, 200)
-    print(S_SSA_hist)
+# for i in range(nb_of_initial_configurations):
+#
+#     NN_prediction = NN.predict(initial_sequences[i][np.newaxis, :, 1:])
+#     NN_samples = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
+#     print(NN_samples.shape)
+#     S_samples_NN = NN_samples[:, 0, 1]
+#     S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
+#     print(S_NN_hist)
+#
+#     SSA_initial_state = get_endtime_state(initial_sequences[i])
+#     print("Initial state:")
+#     print(SSA_initial_state)
+#     simulation_setting = {'S': SSA_initial_state[0], 'I': SSA_initial_state[1], 'R': SSA_initial_state[2]}
+#     endtime = time_step_size
+#
+#     trajectories = SSA_simulation(simulation_setting, endtime, nb_of_trajectories_for_hist, time_step_size)
+#     # trajectories: [trajectory, timestep, timestamp+features]
+#     # timestamps: [trajectory, timestep, 0]
+#     # proper feature: [trajectory, timestep, 1:]
+#     S_samples_SSA = trajectories[:, -1, 1]
+#     S_SSA_hist = get_histogram(S_samples_SSA, 0.5, 200.5, 200)
+#     print(S_SSA_hist)

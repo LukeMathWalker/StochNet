@@ -3,22 +3,35 @@ from sklearn.model_selection import train_test_split
 from stochnet.classes.Errors import ShapeError
 from keras import backend as K
 import numpy as np
+import h5py
 from bidict import bidict
 
 
 class TimeSeriesDataset:
     # TODO: add the possibility of dropping features.
     # Pay attentions to self.scaler and self.labels.
-    def __init__(self, dataset_address, with_timestamps=True, labels=None):
+    def __init__(self, dataset_address, data_format='numpy', with_timestamps=True, labels=None):
         # data: [n_trajectories, n_timesteps, nb_features]
         # if with_timestamps is True the corresponding column is labeled
         # "Timestamps" indipendently of the desired user label
-        with open(dataset_address, 'rb') as data_file:
-            self.data = np.asarray(np.load(data_file), dtype=K.floatx())
+        self.read_data(dataset_address, data_format)
         self.memorize_dataset_shape()
         self.rescaled = False
         self.with_timestamps = with_timestamps
         self.set_labels(labels)
+
+    def read_data(self, dataset_address, data_format):
+        self.data_format = data_format
+
+        if data_format == 'numpy':
+            with open(dataset_address, 'rb') as data_file:
+                self.data = np.asarray(np.load(data_file), dtype=K.floatx())
+        elif data_format == 'hdf5':
+            self.f = h5py.File(str(dataset_address), 'a')
+            self.data = self.f['data']
+        else:
+            raise TypeError('''Unsupported data format. .npy and .hdf5 are\n
+                                the available data formats.''')
 
     def memorize_dataset_shape(self):
         try:
@@ -74,10 +87,26 @@ class TimeSeriesDataset:
                 self.scaler = MinMaxScaler(feature_range=(positive_eps, 1))
             else:
                 self.scaler = StandardScaler()
-            # StandardScaler expects data of the form [n_samples, n_features]
-            flat_data = self.data.reshape(-1, self.nb_features)
-            self.data = self.scaler.fit_transform(flat_data)
-            self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
+            if self.data_format == 'numpy':
+                # StandardScaler expects data of the form [n_samples, n_features]
+                flat_data = self.data.reshape(-1, self.nb_features)
+                self.data = self.scaler.fit_transform(flat_data)
+                self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
+            elif self.data_format == 'hdf5':
+                slice_size = 10**5
+                nb_iteration = self.nb_trajectories // slice_size
+                for i in range(nb_iteration):
+                    data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
+                    self.scaler.partial_fit(X=data_slice)
+                if nb_iteration * slice_size != self.nb_trajectories:
+                    data_slice = self.data[nb_iteration * slice_size:, ...]
+                    self.scaler.partial_fit(X=data_slice)
+                for i in range(nb_iteration):
+                    data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
+                    self.scaler.transform(X=data_slice)
+                if nb_iteration * slice_size != self.nb_trajectories:
+                    data_slice = self.data[nb_iteration * slice_size:, ...]
+                    self.scaler.transform(X=data_slice)
             self.rescaled = True
 
     def explode_into_training_pieces(self, nb_past_timesteps):

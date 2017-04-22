@@ -1,5 +1,6 @@
 from keras.models import Model
 import tensorflow as tf
+import dill
 
 
 class StochNeuralNetwork:
@@ -12,6 +13,17 @@ class StochNeuralNetwork:
         self.model = Model(inputs=self.input_tensor, outputs=output_layer)
         self.model.compile(optimizer=optimizer,
                            loss=self.TopLayer_obj.loss_function)
+
+    @classmethod
+    def load(cls, filepath):
+        with open(filepath, 'rb') as f:
+            obj = dill.load(f)
+        return obj
+
+    def save(self, filepath):
+        with open(filepath, 'wb') as f:
+            dill.dump(self, f)
+        return
 
     def fit(self, X_data, y_data, batch_size=32, epochs=10, verbose=1,
             callbacks=None, validation_split=0.0, validation_data=None):
@@ -89,7 +101,7 @@ class StochNeuralNetwork:
         first_M_predictions = tf.slice(NN_prediction, [0, 0], [slicing_size, -1])
         return first_M_predictions
 
-    def save(self, filepath):
+    def save_model(self, filepath):
         self.model.save(filepath)
         return
 

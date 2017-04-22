@@ -118,7 +118,7 @@ def get_model_weights_filepath():
     current = os.getcwd()
     working_path = os.path.dirname(current)
     basename = os.path.abspath(working_path)
-    weights_filepath = os.path.join(basename, 'models/SIR_-6.66034390926.h5')
+    weights_filepath = os.path.join(basename, 'models/SIR_-5.09288719177.h5')
     return weights_filepath
 
 
@@ -130,7 +130,7 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
     #     samples = np.concatenate((samples, sample), axis=0)
     return samples
 
-
+# MANCA LO SCALINGGGGG!!!!!!
 nb_of_trajectories_for_hist = 10**2
 nb_of_initial_configurations = 2
 nb_past_timesteps = 1

@@ -1,4 +1,6 @@
 import os
+import dill
+import sys
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MultivariateLogNormalOutputLayer, MixtureOutputLayer
@@ -7,6 +9,18 @@ from keras.layers import Input, LSTM, Dense, Dropout, Flatten
 from keras.callbacks import EarlyStopping
 from keras.constraints import maxnorm
 
+
+def save(obj, filepath):
+    with open(filepath, 'wb') as f:
+        dill.dump(obj, f)
+
+def load(filepath):
+    with open(filepath, 'rb') as f:
+        obj = dill.load(f)
+    return obj
+
+
+sys.setrecursionlimit(50000)
 # sess = tf.Session()
 # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
@@ -47,16 +61,21 @@ NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 callbacks = [EarlyStopping(monitor='val_loss', patience=7, verbose=1, mode='min')]
 # result = NN.fit(dataset.X_train, dataset.y_train, batch_size=512, epochs=20, callbacks=callbacks, validation_data=(test_dataset.X_train, test_dataset.y_train))
 result = NN.fit_generator(training_generator=training_generator,
-                          samples_per_epoch=10**5, epochs=3, verbose=1,
+                          samples_per_epoch=10**2, epochs=1, verbose=1,
                           callbacks=callbacks, validation_generator=validation_generator,
                           nb_val_samples=10**2)
 lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
-# test_set_prediction = NN.predict(test_dataset.X_train)
-# NN.visualize_performance_by_sampling(test_dataset.X_train, test_dataset.y_train, test_set_prediction,
-#                                      max_display=4, fitted_scaler=dataset.scaler,
-#                                      feature_labels=dataset.labels)
+filepath = os.path.join(basename, 'models/dill_test_SIR_' + str(lowest_val_loss) + '.h5')
+save(NN, filepath)
+NN_loaded = load(filepath)
+print(NN_loaded)
 
-filepath_for_saving = os.path.join(basename, 'models/SIR_' + str(lowest_val_loss) + '.h5')
-NN.save(filepath_for_saving)
+# test_batch_x, test_batch_y = next(validation_generator)
+# test_batch_prediction = NN.predict_on_batch(test_batch_x)
+# NN.visualize_performance_by_sampling(test_batch_x, test_batch_y, test_batch_prediction,
+#                                      max_display=6)
+#
+# filepath_for_saving = os.path.join(basename, 'models/SIR_' + str(lowest_val_loss) + '.h5')
+# NN.save(filepath_for_saving)

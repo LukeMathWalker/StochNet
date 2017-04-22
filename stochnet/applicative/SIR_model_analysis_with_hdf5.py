@@ -10,17 +10,6 @@ from keras.callbacks import EarlyStopping
 from keras.constraints import maxnorm
 
 
-def save(obj, filepath):
-    with open(filepath, 'wb') as f:
-        dill.dump(obj, f)
-
-def load(filepath):
-    with open(filepath, 'rb') as f:
-        obj = dill.load(f)
-    return obj
-
-
-sys.setrecursionlimit(50000)
 # sess = tf.Session()
 # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
@@ -68,8 +57,8 @@ lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
 filepath = os.path.join(basename, 'models/dill_test_SIR_' + str(lowest_val_loss) + '.h5')
-save(NN, filepath)
-NN_loaded = load(filepath)
+NN.save(filepath)
+NN_loaded = StochNeuralNetwork.load(filepath)
 print(NN_loaded)
 
 # test_batch_x, test_batch_y = next(validation_generator)

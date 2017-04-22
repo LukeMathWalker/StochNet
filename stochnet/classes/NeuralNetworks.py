@@ -1,6 +1,7 @@
 from keras.models import Model
 import tensorflow as tf
 import dill
+import sys
 
 
 class StochNeuralNetwork:
@@ -21,6 +22,7 @@ class StochNeuralNetwork:
         return obj
 
     def save(self, filepath):
+        sys.setrecursionlimit(50000)
         with open(filepath, 'wb') as f:
             dill.dump(self, f)
         return

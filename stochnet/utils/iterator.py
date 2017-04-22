@@ -115,11 +115,11 @@ class HDF5Iterator(Iterator):
         seed: Random seed for data shuffling.
     """
 
-    def __init__(self, filepath,
+    def __init__(self, filepath, X_label='X_data', y_label='y_data',
                  batch_size=32, shuffle=False, seed=None):
         self.f = h5py.File(str(filepath), 'a')
-        self.x = self.f['X_data']
-        self.y = self.f['y_data']
+        self.x = self.f[X_label]
+        self.y = self.f[y_label]
         # TODO: aggiungi la possibilità di non inserire target data
         if self.y is not None and len(self.x) != len(self.y):
             raise ValueError('X and y '

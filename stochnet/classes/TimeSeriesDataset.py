@@ -62,15 +62,16 @@ class TimeSeriesDataset:
             self.labels['timestamps'] = 0
 
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
-                              must_be_rescaled=True, positivity=None, percentage_of_test_data=0.25):
+                              must_be_rescaled=True, positivity=None, percentage_of_test_data=0.25,
+                              filepath_for_saving_no_split=None, filepath_for_saving_w_split=None):
         if keep_timestamps is False:
             self.remove_timestamps()
 
         if must_be_rescaled is True:
             self.rescale(positivity)
 
-        self.explode_into_training_pieces(nb_past_timesteps)
-        self.train_test_split(percentage_of_test_data=percentage_of_test_data)
+        self.explode_into_training_pieces(nb_past_timesteps, filepath_for_saving=filepath_for_saving_no_split)
+        self.train_test_split(percentage_of_test_data=percentage_of_test_data, filepath_for_saving=filepath_for_saving_w_split)
 
     def remove_timestamps(self):
         # data[:,:,0] contains the timestamps if with_timestamps is True
@@ -132,7 +133,7 @@ class TimeSeriesDataset:
             nb_training_pieces_per_chunk = nb_trajectory_per_chunk * nb_training_pieces_from_one_trajectory
             nb_iteration = self.nb_trajectories // nb_trajectory_per_chunk
 
-            self.f_ML_data = h5py.File(str(filepath_for_saving), 'a', libver='latest')
+            self.f_ML_data_no_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
             self.X_data = self.f_ML_data.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_data = self.f_ML_data.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
             for i in tqdm(range(nb_iteration)):
@@ -174,7 +175,7 @@ class TimeSeriesDataset:
             nb_test = ceil(percentage_of_test_data * nb_samples)
             nb_train = nb_samples - nb_test
 
-            self.f_ML_data_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
+            self.f_ML_data_w_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
             self.X_train = self.f_ML_data.create_dataset("X_train", (nb_train, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_train = self.f_ML_data.create_dataset("y_train", (nb_train, self.nb_features), chunks=True)
             self.X_test = self.f_ML_data.create_dataset("X_test", (nb_test, nb_past_timesteps, self.nb_features), chunks=True)

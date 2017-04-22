@@ -37,6 +37,13 @@ class StochNeuralNetwork:
                               validation_split=validation_split,
                               validation_data=validation_data)
 
+    def predict(self, X_data, batch_size=32, verbose=0):
+        return self.model.predict(X_data, batch_size=batch_size, verbose=verbose)
+
+    def memorize_scaler(self, scaler):
+        self.scaler = scaler
+        return
+
     def fit_generator(self, training_generator, samples_per_epoch, epochs=5, verbose=1, callbacks=None, validation_generator=None, nb_val_samples=100):
         return self.model.fit_generator(generator=training_generator,
                                         samples_per_epoch=samples_per_epoch,
@@ -46,9 +53,6 @@ class StochNeuralNetwork:
                                         validation_data=validation_generator,
                                         nb_val_samples=nb_val_samples)
 #        fit_generator(self, generator, steps_per_epoch, epochs=1, verbose=1, callbacks=None, validation_data=None, validation_steps=None, class_weight=None, max_q_size=10, workers=1, pickle_safe=False, initial_epoch=0)
-
-    def predict(self, X_data, batch_size=32, verbose=0):
-        return self.model.predict(X_data, batch_size=batch_size, verbose=verbose)
 
     def predict_generator(self, generator, steps, max_q_size=10, workers=1, pickle_safe=False, verbose=0):
         return self.model.predict_generator(generator, steps,
@@ -112,5 +116,3 @@ class StochNeuralNetwork:
         self.model.compile(optimizer='adam',
                            loss=self.TopLayer_obj.loss_function)
         return
-
-    # TO-DO: save the whole class instance, instead of simply saving the Keras/TF model

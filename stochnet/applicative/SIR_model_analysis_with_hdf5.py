@@ -69,6 +69,8 @@ lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
 NN.load_weights(checkpoint_filepath)
+model_filepath = os.path.join(basename, 'models/model_01/model.h5')
+NN.save_model(model_filepath)
 
 filepath = os.path.join(basename, 'models/model_01/dill_SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath)

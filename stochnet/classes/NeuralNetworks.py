@@ -1,4 +1,4 @@
-from keras.models import Model
+from keras.models import Model, load_model
 import tensorflow as tf
 import dill
 import sys
@@ -112,7 +112,7 @@ class StochNeuralNetwork:
         return
 
     def load_model(self, filepath):
-        self.model.load_model(filepath)
+        self.model = load_model(filepath)
         return
 
     def load_weights(self, filepath):

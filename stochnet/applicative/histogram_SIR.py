@@ -144,10 +144,10 @@ initial_sequence_endtime = (nb_past_timesteps - 1) * time_step_size
 initial_sequences = generate_initial_sequences(initial_sequence_endtime, nb_of_initial_configurations, time_step_size)
 initial_sequences = initial_sequences[..., 1:]
 print(initial_sequences.shape)
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_-7.49543906689.h5'
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_-3.50742949724.h5'
 NN = StochNeuralNetwork.load(model_filepath)
-weights_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/best_weights.h5'
-NN.load_weights(weights_filepath)
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/model.h5'
+NN.load_model(model_filepath)
 initial_sequences_rescaled = NN.scaler.transform(initial_sequences.reshape(-1, nb_features)).reshape(nb_of_initial_configurations, -1, nb_features)
 
 for i in range(nb_of_initial_configurations):

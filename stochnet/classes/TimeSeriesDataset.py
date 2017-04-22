@@ -4,6 +4,7 @@ from stochnet.classes.Errors import ShapeError
 from keras import backend as K
 import numpy as np
 import h5py
+import tqdm
 from bidict import bidict
 
 
@@ -133,7 +134,7 @@ class TimeSeriesDataset:
             self.f_ML_data = h5py.File(str(filepath_for_saving), 'a', libver='latest')
             self.X_data = self.f_ML_data.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_data = self.f_ML_data.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
-            for i in range(nb_iteration):
+            for i in tqdm(range(nb_iteration)):
                 X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
                 self.X_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = X_data_chunk
                 self.y_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = y_data_chunk

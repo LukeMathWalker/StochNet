@@ -109,13 +109,13 @@ class TimeSeriesDataset:
                 for i in range(nb_iteration):
                     data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
                     flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
-                    self.scaler.transform(X=flat_data_slice)
-                    self.data[i * slice_size: (i + 1) * slice_size, ...] = flat_data_slice.reshape(-1, self.nb_timesteps, self.nb_features)
+                    flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
+                    self.data[i * slice_size: (i + 1) * slice_size, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
                 if nb_iteration * slice_size != self.nb_trajectories:
                     data_slice = self.data[nb_iteration * slice_size:, ...]
                     flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
-                    self.scaler.transform(X=flat_data_slice)
-                    self.data[nb_iteration * slice_size:, ...] = flat_data_slice.reshape(-1, self.nb_timesteps, self.nb_features)
+                    flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
+                    self.data[nb_iteration * slice_size:, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
             self.rescaled = True
 
     def explode_into_training_pieces(self, nb_past_timesteps, filepath_for_saving=None):

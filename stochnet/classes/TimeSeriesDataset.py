@@ -125,7 +125,7 @@ class TimeSeriesDataset:
             if filepath_for_saving is None:
                 raise ValueError('hdf5 mode needs a valid filepath for saving.')
 
-            chunk_size = 10**6
+            chunk_size = 10**7
             nb_training_pieces_from_one_trajectory = self.nb_timesteps - nb_past_timesteps
             nb_trajectory_per_chunk = max(chunk_size // nb_training_pieces_from_one_trajectory, 1)
             nb_training_pieces_per_chunk = nb_trajectory_per_chunk * nb_training_pieces_from_one_trajectory

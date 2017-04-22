@@ -134,8 +134,8 @@ class TimeSeriesDataset:
             nb_iteration = self.nb_trajectories // nb_trajectory_per_chunk
 
             self.f_ML_data_no_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
-            self.X_data = self.f_ML_data.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
-            self.y_data = self.f_ML_data.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
+            self.X_data = self.f_ML_data_no_split.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
+            self.y_data = self.f_ML_data_no_split.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
             for i in tqdm(range(nb_iteration)):
                 X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
                 self.X_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = X_data_chunk
@@ -176,10 +176,10 @@ class TimeSeriesDataset:
             nb_train = nb_samples - nb_test
 
             self.f_ML_data_w_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
-            self.X_train = self.f_ML_data.create_dataset("X_train", (nb_train, nb_past_timesteps, self.nb_features), chunks=True)
-            self.y_train = self.f_ML_data.create_dataset("y_train", (nb_train, self.nb_features), chunks=True)
-            self.X_test = self.f_ML_data.create_dataset("X_test", (nb_test, nb_past_timesteps, self.nb_features), chunks=True)
-            self.y_test = self.f_ML_data.create_dataset("y_test", (nb_test, self.nb_features), chunks=True)
+            self.X_train = self.f_ML_data_w_split.create_dataset("X_train", (nb_train, nb_past_timesteps, self.nb_features), chunks=True)
+            self.y_train = self.f_ML_data_w_split.create_dataset("y_train", (nb_train, self.nb_features), chunks=True)
+            self.X_test = self.f_ML_data_w_split.create_dataset("X_test", (nb_test, nb_past_timesteps, self.nb_features), chunks=True)
+            self.y_test = self.f_ML_data_w_split.create_dataset("y_test", (nb_test, self.nb_features), chunks=True)
 
             chunk_size = 10**7
             nb_iteration = nb_samples // chunk_size

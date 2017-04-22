@@ -4,7 +4,7 @@ from stochnet.classes.Errors import ShapeError
 from keras import backend as K
 import numpy as np
 import h5py
-import tqdm
+from tqdm import tqdm
 from bidict import bidict
 
 

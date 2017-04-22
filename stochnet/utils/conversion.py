@@ -10,6 +10,6 @@ def convert_ML_dataset_from_numpy_to_hdf5(np_X_data, np_y_data, filepath_for_sav
 
 def convert_from_numpy_to_hdf5(np_data, filepath_for_saving):
     f = h5py.File(str(filepath_for_saving), 'a', libver='latest')
-    dset = f.create_dataset("data", data=np_X_data, chunks=True)
+    dset = f.create_dataset("data", data=np_data, chunks=True)
     f.close()
     return

@@ -135,11 +135,11 @@ class TimeSeriesDataset:
             self.X_data = self.f_ML_data.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_data = self.f_ML_data.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
             for i in tqdm(range(nb_iteration)):
-                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
+                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj_EX(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
                 self.X_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = X_data_chunk
                 self.y_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = y_data_chunk
             if nb_trajectory_per_chunk * nb_iteration != self.nb_trajectories:
-                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
+                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj_EX(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
                 self.X_data[nb_iteration * nb_trajectory_per_chunk:, ...] = X_data_chunk
                 self.y_data[nb_iteration * nb_trajectory_per_chunk:, ...] = y_data_chunk
         else:
@@ -155,6 +155,12 @@ class TimeSeriesDataset:
                 y_data.append(y_placeholder)
         X_data = np.array(X_data, dtype=K.floatx())
         y_data = np.array(y_data, dtype=K.floatx())
+        return X_data, y_data
+
+    def explode_into_training_pieces_a_batch_of_traj_EX(self, range_start, range_end, nb_past_timesteps):
+        for oldest_timestep in range(self.nb_timesteps - nb_past_timesteps):
+            X_data = self.data[range_start:range_end, oldest_timestep:(oldest_timestep + nb_past_timesteps), :]
+            y_data = self.data[range_start:range_end, oldest_timestep + nb_past_timesteps, :]
         return X_data, y_data
 
     def check_if_nb_past_timesteps_is_valid(self, nb_past_timesteps):

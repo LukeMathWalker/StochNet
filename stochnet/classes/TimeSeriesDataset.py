@@ -140,24 +140,12 @@ class TimeSeriesDataset:
                 self.y_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = y_data_chunk
             if nb_trajectory_per_chunk * nb_iteration != self.nb_trajectories:
                 X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj_EX(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
-                self.X_data[nb_iteration * nb_trajectory_per_chunk:, ...] = X_data_chunk
-                self.y_data[nb_iteration * nb_trajectory_per_chunk:, ...] = y_data_chunk
+                self.X_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = X_data_chunk
+                self.y_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = y_data_chunk
         else:
             raise ValueError('Unknown mode')
 
     def explode_into_training_pieces_a_batch_of_traj(self, range_start, range_end, nb_past_timesteps):
-        X_data, y_data = [], []
-        for trajectory in range(range_start, range_end):
-            for oldest_timestep in range(self.nb_timesteps - nb_past_timesteps):
-                X_placeholder = self.data[trajectory, oldest_timestep:(oldest_timestep + nb_past_timesteps), :]
-                y_placeholder = self.data[trajectory, oldest_timestep + nb_past_timesteps, :]
-                X_data.append(X_placeholder)
-                y_data.append(y_placeholder)
-        X_data = np.array(X_data, dtype=K.floatx())
-        y_data = np.array(y_data, dtype=K.floatx())
-        return X_data, y_data
-
-    def explode_into_training_pieces_a_batch_of_traj_EX(self, range_start, range_end, nb_past_timesteps):
         X_data = self.data[range_start:range_end, 0:nb_past_timesteps, :]
         y_data = self.data[range_start:range_end, nb_past_timesteps, :]
         for oldest_timestep in range(1, self.nb_timesteps - nb_past_timesteps):

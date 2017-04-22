@@ -10,3 +10,6 @@ dataset_address = '/home/lucap/Documenti/Data storage/SIR_dataset_medium_raw.hdf
 dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
 nb_past_timesteps = 1
 dataset.rescale(positivity=None)
+print(dataset.scaler)
+print(dataset.scaler.mean_)
+print(dataset.scaler.scale_)

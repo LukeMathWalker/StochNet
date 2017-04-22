@@ -27,7 +27,7 @@ class TimeSeriesDataset:
             with open(dataset_address, 'rb') as data_file:
                 self.data = np.asarray(np.load(data_file), dtype=K.floatx())
         elif data_format == 'hdf5':
-            self.f = h5py.File(str(dataset_address), 'a')
+            self.f_raw_data = h5py.File(str(dataset_address), 'a')
             self.data = self.f['data']
         else:
             raise TypeError('''Unsupported data format. .npy and .hdf5 are\n
@@ -93,7 +93,7 @@ class TimeSeriesDataset:
                 self.data = self.scaler.fit_transform(flat_data)
                 self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
             elif self.data_format == 'hdf5':
-                slice_size = 10**5
+                slice_size = 10**6
                 nb_iteration = self.nb_trajectories // slice_size
                 for i in range(nb_iteration):
                     data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
@@ -115,18 +115,46 @@ class TimeSeriesDataset:
                     self.data[nb_iteration * slice_size:, ...] = flat_data_slice.reshape(-1, self.nb_timesteps, self.nb_features)
             self.rescaled = True
 
-    def explode_into_training_pieces(self, nb_past_timesteps):
+    def explode_into_training_pieces(self, nb_past_timesteps, mode='numpy', filepath_for_saving=None):
         # TODO: add the possibility of seeing more than 1 timestep in the future
         self.check_if_nb_past_timesteps_is_valid(nb_past_timesteps)
+        if mode == 'numpy':
+            self.X_data, self.y_data = self.explode_into_training_pieces_a_batch_of_traj(0, self.nb_trajectories, nb_past_timesteps)
+        elif mode == 'hdf5':
+            if filepath_for_saving is None:
+                raise ValueError('hdf5 mode needs a valid filepath for saving.')
+
+            chunck_size = 10**6
+            nb_training_pieces_from_one_trajectory = self.nb_timesteps - nb_past_timesteps
+            nb_trajectory_per_chunk = min(chunck_size // nb_training_pieces_from_one_trajectory, 1)
+            nb_training_pieces_per_chunk = nb_trajectory_per_chunk * nb_training_pieces_from_one_trajectory
+            nb_iteration = self.nb_trajectories // nb_trajectory_per_chunk
+
+            self.f_ML_data = h5py.File(str(filepath_for_saving), 'a', libver='latest')
+            self.X_data = self.f_ML_data.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
+            self.y_data = self.f_ML_data.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
+            for i in range(nb_iteration):
+                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
+                self.X_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = X_data_chunk
+                self.y_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = y_data_chunk
+            if nb_trajectory_per_chunk * nb_iteration != self.nb_trajectories:
+                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
+                self.X_data[nb_iteration * nb_trajectory_per_chunk:, ...] = X_data_chunk
+                self.y_data[nb_iteration * nb_trajectory_per_chunk:, ...] = y_data_chunk
+        else:
+            raise ValueError('Unknown mode')
+
+    def explode_into_training_pieces_a_batch_of_traj(self, range_start, range_end, nb_past_timesteps):
         X_data, y_data = [], []
-        for trajectory in range(self.nb_trajectories):
+        for trajectory in range(range_start, range_end):
             for oldest_timestep in range(self.nb_timesteps - nb_past_timesteps):
                 X_placeholder = self.data[trajectory, oldest_timestep:(oldest_timestep + nb_past_timesteps), :]
                 y_placeholder = self.data[trajectory, oldest_timestep + nb_past_timesteps, :]
                 X_data.append(X_placeholder)
                 y_data.append(y_placeholder)
-        self.X_data = np.array(X_data, dtype=K.floatx())
-        self.y_data = np.array(y_data, dtype=K.floatx())
+        X_data = np.array(X_data, dtype=K.floatx())
+        y_data = np.array(y_data, dtype=K.floatx())
+        return X_data, y_data
 
     def check_if_nb_past_timesteps_is_valid(self, nb_past_timesteps):
         if nb_past_timesteps + 1 > self.nb_timesteps:

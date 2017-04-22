@@ -158,9 +158,13 @@ class TimeSeriesDataset:
         return X_data, y_data
 
     def explode_into_training_pieces_a_batch_of_traj_EX(self, range_start, range_end, nb_past_timesteps):
-        for oldest_timestep in range(self.nb_timesteps - nb_past_timesteps):
-            X_data = self.data[range_start:range_end, oldest_timestep:(oldest_timestep + nb_past_timesteps), :]
-            y_data = self.data[range_start:range_end, oldest_timestep + nb_past_timesteps, :]
+        X_data = self.data[range_start:range_end, 0:nb_past_timesteps, :]
+        y_data = self.data[range_start:range_end, nb_past_timesteps, :]
+        for oldest_timestep in range(1, self.nb_timesteps - nb_past_timesteps):
+            X_placeholder = self.data[range_start:range_end, oldest_timestep:(oldest_timestep + nb_past_timesteps), :]
+            y_placeholder = self.data[range_start:range_end, oldest_timestep + nb_past_timesteps, :]
+            X_data = np.concatenate((X_data, X_placeholder), axis=0)
+            y_data = np.concatenate((y_data, y_placeholder), axis=0)
         return X_data, y_data
 
     def check_if_nb_past_timesteps_is_valid(self, nb_past_timesteps):

@@ -1,10 +1,14 @@
 import numpy as np
 from numpy.random import randint
-from stochnet.utils.histograms import histogram_distance, get_histogram
+
 from keras.layers import Input, LSTM, Dense, Dropout, Flatten
+from keras.constraints import maxnorm
+
+from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MixtureOutputLayer
-from keras.constraints import maxnorm
+from stochnet.utils.histograms import histogram_distance, get_histogram
+
 import os
 import stochpy
 import pandas as pd
@@ -114,11 +118,11 @@ def get_NN(nb_past_timesteps, nb_features):
     return NN
 
 
-def get_model_weights_filepath():
+def get_NN_filepath():
     current = os.getcwd()
     working_path = os.path.dirname(current)
     basename = os.path.abspath(working_path)
-    weights_filepath = os.path.join(basename, 'models/SIR_-5.09288719177.h5')
+    weights_filepath = os.path.join(basename, 'models/dill_test_SIR_-5.71435209751.h5')
     return weights_filepath
 
 
@@ -134,24 +138,27 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
 nb_of_trajectories_for_hist = 10**2
 nb_of_initial_configurations = 2
 nb_past_timesteps = 1
+nb_features = 3
 time_step_size = 2**(-6)
 initial_sequence_endtime = (nb_past_timesteps - 1) * time_step_size
 initial_sequences = generate_initial_sequences(initial_sequence_endtime, nb_of_initial_configurations, time_step_size)
-
-# NN = get_NN(nb_past_timesteps, 3)
-# weights_filepath = get_model_weights_filepath()
-# NN.model.load_weights(weights_filepath)
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/dill_test_SIR_-5.82269514084.h5'
+initial_sequences = initial_sequences[..., 1:]
+print(initial_sequences.shape)
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_-7.49543906689.h5'
 NN = StochNeuralNetwork.load(model_filepath)
+weights_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/best_weights.h5'
+NN.load_weights(weights_filepath)
+initial_sequences_rescaled = NN.scaler.transform(initial_sequences.reshape(-1, nb_features)).reshape(nb_of_initial_configurations, -1, nb_features)
 
-# for i in range(nb_of_initial_configurations):
-#
-#     NN_prediction = NN.predict(initial_sequences[i][np.newaxis, :, 1:])
-#     NN_samples = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
-#     print(NN_samples.shape)
-#     S_samples_NN = NN_samples[:, 0, 1]
-#     S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
-#     print(S_NN_hist)
+for i in range(nb_of_initial_configurations):
+
+    NN_prediction = NN.predict(initial_sequences_rescaled[i][np.newaxis, :, :])
+    NN_samples = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
+    print(NN_samples.shape)
+    S_samples_NN = NN_samples[:, 0, 1]
+    print(S_samples_NN.shape)
+    S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
+    print(S_NN_hist)
 #
 #     SSA_initial_state = get_endtime_state(initial_sequences[i])
 #     print("Initial state:")

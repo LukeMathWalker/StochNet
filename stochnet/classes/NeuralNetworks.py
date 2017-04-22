@@ -111,6 +111,10 @@ class StochNeuralNetwork:
         self.model.save(filepath)
         return
 
+    def load_model(self, filepath):
+        self.model.load_model(filepath)
+        return
+
     def load_weights(self, filepath):
         self.model.load_weights(filepath)
         self.model.compile(optimizer='adam',

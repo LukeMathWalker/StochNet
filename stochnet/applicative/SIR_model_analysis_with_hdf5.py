@@ -38,46 +38,42 @@ training_generator = HDF5Iterator(filepath_for_saving_w_split, batch_size=batch_
                                   shuffle=True, X_label='X_train', y_label='y_train')
 validation_generator = HDF5Iterator(filepath_for_saving_w_split, batch_size=batch_size,
                                     shuffle=True, X_label='X_test', y_label='y_test')
-for i in range(4):
-    print(next(training_generator))
-    print(next(validation_generator))
 
-# input_tensor = Input(shape=(nb_past_timesteps, nb_features))
-# flatten1 = Flatten()(input_tensor)
-# NN_body = Dense(2048, kernel_constraint=maxnorm(1.67525276))(flatten1)
-#
-# number_of_components = 2
-# components = []
-# for j in range(number_of_components):
-#     components.append(MultivariateNormalCholeskyOutputLayer(nb_features))
-#
-# TopModel_obj = MixtureOutputLayer(components)
-#
-# # TopModel_obj = MultivariateNormalCholeskyOutputLayer(nb_features)
-#
-# NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
-# NN.memorize_scaler = dataset.scaler
-#
-# callbacks = []
-# callbacks.append(EarlyStopping(monitor='val_loss', patience=7, verbose=1, mode='min'))
-# checkpoint_filepath = 'temp.h5'
-# callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
-#                                  verbose=1, save_best_only=True,
-#                                  save_weights_only=True, mode='min'))
-# result = NN.fit_generator(training_generator=training_generator,
-#                           samples_per_epoch=10**5, epochs=3, verbose=1,
-#                           callbacks=callbacks, validation_generator=validation_generator,
-#                           nb_val_samples=10**2)
-# lowest_val_loss = min(result.history['val_loss'])
-# print(lowest_val_loss)
-#
-# NN.load_weights(checkpoint_filepath)
-# os.remove(checkpoint_filepath)
-#
-# filepath = os.path.join(basename, 'models/dill_test_SIR_' + str(lowest_val_loss) + '.h5')
-# NN.save(filepath)
-#
-# test_batch_x, test_batch_y = next(validation_generator)
-# test_batch_prediction = NN.predict_on_batch(test_batch_x)
-# NN.visualize_performance_by_sampling(test_batch_x, test_batch_y, test_batch_prediction,
-#                                      max_display=6)
+input_tensor = Input(shape=(nb_past_timesteps, nb_features))
+flatten1 = Flatten()(input_tensor)
+NN_body = Dense(2048, kernel_constraint=maxnorm(1.67525276))(flatten1)
+
+number_of_components = 2
+components = []
+for j in range(number_of_components):
+    components.append(MultivariateNormalCholeskyOutputLayer(nb_features))
+
+TopModel_obj = MixtureOutputLayer(components)
+
+# TopModel_obj = MultivariateNormalCholeskyOutputLayer(nb_features)
+
+NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
+NN.memorize_scaler(dataset.scaler)
+
+callbacks = []
+callbacks.append(EarlyStopping(monitor='val_loss', patience=7, verbose=1, mode='min'))
+checkpoint_filepath = os.path.join(basename, 'models/model_01/best_weights.h5')
+callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
+                                 verbose=1, save_best_only=True,
+                                 save_weights_only=True, mode='min'))
+result = NN.fit_generator(training_generator=training_generator,
+                          samples_per_epoch=10**5, epochs=3, verbose=1,
+                          callbacks=callbacks, validation_generator=validation_generator,
+                          nb_val_samples=10**2)
+lowest_val_loss = min(result.history['val_loss'])
+print(lowest_val_loss)
+
+NN.load_weights(checkpoint_filepath)
+
+filepath = os.path.join(basename, 'models/model_01/dill_SIR_' + str(lowest_val_loss) + '.h5')
+NN.save(filepath)
+
+test_batch_x, test_batch_y = next(validation_generator)
+test_batch_prediction = NN.predict_on_batch(test_batch_x)
+NN.visualize_performance_by_sampling(test_batch_x, test_batch_y, test_batch_prediction,
+                                     max_display=6)

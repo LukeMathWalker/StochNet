@@ -6,6 +6,7 @@ import numpy as np
 import h5py
 from tqdm import tqdm
 from bidict import bidict
+from math import ceil
 
 
 class TimeSeriesDataset:
@@ -24,10 +25,10 @@ class TimeSeriesDataset:
     def read_data(self, dataset_address, data_format):
         self.data_format = data_format
 
-        if data_format == 'numpy':
+        if self.data_format == 'numpy':
             with open(dataset_address, 'rb') as data_file:
                 self.data = np.asarray(np.load(data_file), dtype=K.floatx())
-        elif data_format == 'hdf5':
+        elif self.data_format == 'hdf5':
             self.f_raw_data = h5py.File(str(dataset_address), 'a')
             self.data = self.f_raw_data['data']
         else:
@@ -116,12 +117,12 @@ class TimeSeriesDataset:
                     self.data[nb_iteration * slice_size:, ...] = flat_data_slice.reshape(-1, self.nb_timesteps, self.nb_features)
             self.rescaled = True
 
-    def explode_into_training_pieces(self, nb_past_timesteps, mode='numpy', filepath_for_saving=None):
+    def explode_into_training_pieces(self, nb_past_timesteps, filepath_for_saving=None):
         # TODO: add the possibility of seeing more than 1 timestep in the future
         self.check_if_nb_past_timesteps_is_valid(nb_past_timesteps)
-        if mode == 'numpy':
+        if self.data_format == 'numpy':
             self.X_data, self.y_data = self.explode_into_training_pieces_a_batch_of_traj(0, self.nb_trajectories, nb_past_timesteps)
-        elif mode == 'hdf5':
+        elif self.data_format == 'hdf5':
             if filepath_for_saving is None:
                 raise ValueError('hdf5 mode needs a valid filepath for saving.')
 
@@ -143,7 +144,7 @@ class TimeSeriesDataset:
                 self.X_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = X_data_chunk
                 self.y_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = y_data_chunk
         else:
-            raise ValueError('Unknown mode')
+            raise ValueError('Unknown data format.')
 
     def explode_into_training_pieces_a_batch_of_traj(self, range_start, range_end, nb_past_timesteps):
         X_data = self.data[range_start:range_end, 0:nb_past_timesteps, :]
@@ -161,6 +162,35 @@ class TimeSeriesDataset:
         elif nb_past_timesteps < 1:
             raise ValueError('You need to consider at least 1 timestep in the past!')
 
-    def train_test_split(self, percentage_of_test_data=0.25):
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X_data, self.y_data,
-                                                                                test_size=percentage_of_test_data)
+    def train_test_split(self, percentage_of_test_data=0.25, filepath_for_saving=None):
+        if self.data_format == 'numpy':
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X_data, self.y_data,
+                                                                                    test_size=percentage_of_test_data)
+        elif self.data_format == 'hdf5':
+            if filepath_for_saving is None:
+                raise ValueError('hdf5 mode needs a valid filepath for saving.')
+            nb_samples = self.X_data.shape[0]
+            nb_past_timesteps = self.X_data.shape[1]
+            nb_test = ceil(percentage_of_test_data * nb_samples)
+            nb_train = nb_samples - nb_test
+
+            self.f_ML_data_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
+            self.X_train = self.f_ML_data.create_dataset("X_train", (nb_train, nb_past_timesteps, self.nb_features), chunks=True)
+            self.y_train = self.f_ML_data.create_dataset("y_train", (nb_train, self.nb_features), chunks=True)
+            self.X_test = self.f_ML_data.create_dataset("X_test", (nb_test, nb_past_timesteps, self.nb_features), chunks=True)
+            self.y_test = self.f_ML_data.create_dataset("y_test", (nb_test, self.nb_features), chunks=True)
+
+            chunk_size = 10**7
+            nb_iteration = nb_samples // chunk_size
+            nb_test_per_chunk = ceil(percentage_of_test_data * chunk_size)
+            nb_train_per_chunk = chunk_size - nb_test_per_chunk
+            for i in tqdm(range(nb_iteration)):
+                X_data_slice = np.asarray(self.X_data[i * chunk_size: (i + 1) * chunk_size, ...], dtype=K.floatx())
+                y_data_slice = np.asarray(self.y_data[i * chunk_size: (i + 1) * chunk_size, ...], dtype=K.floatx())
+                self.X_train[i * nb_train_per_chunk: (i + 1) * nb_train_per_chunk, ...], self.X_test[i * nb_test_per_chunk: (i + 1) * nb_test_per_chunk, ...], self.y_train[i * nb_train_per_chunk: (i + 1) * nb_train_per_chunk, ...], self.y_test[i * nb_test_per_chunk: (i + 1) * nb_test_per_chunk, ...] = train_test_split(X_data_slice, y_data_slice, test_size=percentage_of_test_data)
+            if nb_iteration * chunk_size != nb_samples:
+                X_data_slice = np.asarray(self.X_data[nb_iteration * chunk_size:, ...], dtype=K.floatx())
+                y_data_slice = np.asarray(self.y_data[nb_iteration * chunk_size:, ...], dtype=K.floatx())
+                self.X_train[nb_iteration * nb_train_per_chunk:, ...], self.X_test[nb_iteration * nb_test_per_chunk:, ...], self.y_train[nb_iteration * nb_train_per_chunk:, ...], self.y_test[nb_iteration * nb_test_per_chunk:, ...] = train_test_split(X_data_slice, y_data_slice, test_size=percentage_of_test_data)
+        else:
+            raise ValueError('Unknown data format.')

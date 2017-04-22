@@ -149,6 +149,4 @@ class HDF5Iterator(Iterator):
         for i, j in enumerate(index_array):
             y = self.y[j]
             batch_y[i] = y
-        # index_array.sort()
-        # batch_y = self.y[index_array.tolist()]
         return batch_x, batch_y

@@ -28,8 +28,9 @@ test_dataset_address = '/home/lucap/Documenti/Data storage/SIR_dataset_medium_co
 nb_features = 3
 nb_past_timesteps = 1
 
-training_generator = HDF5Iterator(dataset_address, batch_size=512, shuffle=True)
-validation_generator = HDF5Iterator(test_dataset_address, batch_size=512, shuffle=True)
+batch_size = 64
+training_generator = HDF5Iterator(dataset_address, batch_size=batch_size, shuffle=True)
+validation_generator = HDF5Iterator(test_dataset_address, batch_size=batch_size, shuffle=True)
 
 input_tensor = Input(shape=(nb_past_timesteps, nb_features))
 # hidden1 = LSTM(256, kernel_constraint=maxnorm(1.78998725), recurrent_constraint=maxnorm(2.95163704))(input_tensor)

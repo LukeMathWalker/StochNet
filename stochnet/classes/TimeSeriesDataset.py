@@ -135,11 +135,11 @@ class TimeSeriesDataset:
             self.X_data = self.f_ML_data.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_data = self.f_ML_data.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
             for i in tqdm(range(nb_iteration)):
-                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj_EX(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
+                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
                 self.X_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = X_data_chunk
                 self.y_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = y_data_chunk
             if nb_trajectory_per_chunk * nb_iteration != self.nb_trajectories:
-                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj_EX(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
+                X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
                 self.X_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = X_data_chunk
                 self.y_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = y_data_chunk
         else:

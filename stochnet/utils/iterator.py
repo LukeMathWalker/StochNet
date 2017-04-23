@@ -117,7 +117,7 @@ class HDF5Iterator(Iterator):
 
     def __init__(self, filepath, X_label='X_data', y_label='y_data',
                  batch_size=32, shuffle=False, seed=None):
-        self.f = h5py.File(str(filepath), 'a')
+        self.f = h5py.File(str(filepath), 'r')
         self.x = self.f[X_label]
         self.y = self.f[y_label]
         # TODO: aggiungi la possibilità di non inserire target data

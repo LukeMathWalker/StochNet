@@ -3,6 +3,8 @@ from numpy.random import randint
 
 from keras.layers import Input, LSTM, Dense, Dropout, Flatten
 from keras.constraints import maxnorm
+from keras.utils.generic_utils import get_custom_objects
+import keras.activations
 
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
@@ -144,10 +146,13 @@ initial_sequence_endtime = (nb_past_timesteps - 1) * time_step_size
 initial_sequences = generate_initial_sequences(initial_sequence_endtime, nb_of_initial_configurations, time_step_size)
 initial_sequences = initial_sequences[..., 1:]
 print(initial_sequences.shape)
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_-3.50742949724.h5'
+
+
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_1.20597857058.h5'
 NN = StochNeuralNetwork.load(model_filepath)
+# NN.model.compile(optimizer='adam', loss=NN.TopLayer_obj.loss_function)
 model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/model.h5'
-NN.load_model(model_filepath)
+NN.load_model(model_filepath, custom_objects={':exp': lambda x: tf.exp(x)})
 initial_sequences_rescaled = NN.scaler.transform(initial_sequences.reshape(-1, nb_features)).reshape(nb_of_initial_configurations, -1, nb_features)
 
 for i in range(nb_of_initial_configurations):

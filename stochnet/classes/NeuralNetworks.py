@@ -111,8 +111,8 @@ class StochNeuralNetwork:
         self.model.save(filepath)
         return
 
-    def load_model(self, filepath):
-        self.model = load_model(filepath)
+    def load_model(self, filepath, custom_objects=None):
+        self.model = load_model(filepath, custom_objects=custom_objects)
         return
 
     def load_weights(self, filepath):

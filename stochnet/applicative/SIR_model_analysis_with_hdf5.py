@@ -6,6 +6,7 @@ from stochnet.utils.iterator import HDF5Iterator
 from keras.layers import Input, LSTM, Dense, Dropout, Flatten
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.constraints import maxnorm
+import tensorflow as tf
 
 
 # sess = tf.Session()
@@ -62,7 +63,7 @@ callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
                                  verbose=1, save_best_only=True,
                                  save_weights_only=True, mode='min'))
 result = NN.fit_generator(training_generator=training_generator,
-                          samples_per_epoch=10**5, epochs=3, verbose=1,
+                          samples_per_epoch=10**3, epochs=1, verbose=1,
                           callbacks=callbacks, validation_generator=validation_generator,
                           nb_val_samples=10**2)
 lowest_val_loss = min(result.history['val_loss'])
@@ -74,6 +75,12 @@ NN.save_model(model_filepath)
 
 filepath = os.path.join(basename, 'models/model_01/dill_SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath)
+
+saver = tf.train.Saver()
+sess = tf.Session()
+with sess.as_default():
+    sess_filepath = os.path.join(basename, 'models/model_01/tf_sess')
+    saver.save(sess, sess_filepath)
 
 test_batch_x, test_batch_y = next(validation_generator)
 test_batch_prediction = NN.predict_on_batch(test_batch_x)

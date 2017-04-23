@@ -111,10 +111,6 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
         return log_likelihood
 
 
-def exp(x):
-    return tf.exp(x)
-
-
 class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
 
     def __init__(self, sample_space_dimension):
@@ -135,7 +131,7 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
 
     def add_layer_on_top(self, base_model):
         mu = Dense(self._sample_space_dimension, activation=None)(base_model)
-        chol_diag = Dense(self._sample_space_dimension, activation=exp)(base_model)
+        chol_diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
         chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)(base_model)
         return concatenate([mu, chol_diag, chol_sub_diag], axis=-1)
 

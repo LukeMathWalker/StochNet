@@ -3,7 +3,7 @@ import numpy as np
 import abc
 from keras.layers import Dense
 from keras.layers.merge import concatenate
-from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, MultivariateLogNormal, Mixture
+from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, MultivariateLogNormal, Mixture, MultivariateNormalDiag
 from stochnet.classes.Errors import ShapeError, DimensionError
 
 
@@ -109,6 +109,50 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
     def log_likelihood_function(self, y_true, y_pred):
         log_likelihood = -tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)
         return log_likelihood
+
+
+class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
+
+    def __init__(self, sample_space_dimension):
+        self.sample_space_dimension = sample_space_dimension
+
+    @property
+    def sample_space_dimension(self):
+        return self._sample_space_dimension
+
+    @sample_space_dimension.setter
+    def sample_space_dimension(self, new_sample_space_dimension):
+        if new_sample_space_dimension > 1:
+            self._sample_space_dimension = new_sample_space_dimension
+            self.number_of_output_neurons = 2 * self._sample_space_dimension
+        else:
+            raise ValueError('''The sample space dimension for a multivariate normal variable needs to be at least two!''')
+
+    def add_layer_on_top(self, base_model):
+        mu = Dense(self._sample_space_dimension, activation=None)(base_model)
+        diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
+        return concatenate([mu, diag], axis=-1)
+
+    def get_tensor_random_variable(self, NN_prediction):
+        self.check_NN_prediction_shape(NN_prediction)
+        mu = tf.slice(NN_prediction, [0, 0], [-1, self._sample_space_dimension])
+        diag = tf.slice(NN_prediction, [0, self._sample_space_dimension], [-1, self._sample_space_dimension])
+        return MultivariateNormalDiag(mu, diag)
+
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
+        return super().sample(NN_prediction, sample_shape, sess)
+
+    def get_description(self, NN_prediction):
+        return super().get_description(NN_prediction)
+
+    def check_NN_prediction_shape(self, NN_prediction):
+        super().check_NN_prediction_shape(NN_prediction)
+
+    def loss_function(self, y_true, y_pred):
+        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+
+    def log_likelihood(self, y_true, y_pred):
+        return self.get_tensor_random_variable(y_pred).log_prob(y_true)
 
 
 class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):

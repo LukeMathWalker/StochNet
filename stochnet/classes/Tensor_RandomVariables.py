@@ -1,5 +1,6 @@
 from tensorflow.contrib.distributions import MultivariateNormalCholesky as tf_MultivariateNormalCholesky
 from tensorflow.contrib.distributions import Categorical as tf_Categorical
+from tensorflow.contrib.distributions import MultivariateNormalDiag as tf_MultivariateNormalDiag
 from tensorflow.contrib.distributions import Mixture as tf_Mixture
 from tensorflow.contrib.distributions import bijector, TransformedDistribution
 import tensorflow as tf
@@ -27,6 +28,45 @@ class Categorical:
         description_preamble = "Categorical random variable with {0} classes.\n\n".format(self.number_of_classes)
         for j in range(self.nb_of_indipendent_random_variables):
             description = description_preamble + "\tClass probabilities: \n\t{0}\n\n".format(flattened_class_probabilities[j, :])
+            descriptions.append(description)
+        return descriptions
+
+
+class MultivariateNormalDiag:
+
+    def __init__(self, mu, diag, validate_args=False):
+        self.distribution_obj = tf_MultivariateNormalDiag(mu, diag, validate_args=validate_args)
+
+    def log_prob(self, value):
+        return self.distribution_obj.log_prob(value)
+
+    @property
+    def mean(self):
+        return self.distribution_obj.mu
+
+    @property
+    def covariance(self):
+        return self.distribution_obj.sigma
+
+    @property
+    def sample_space_dimension(self):
+        return self.distribution_obj.get_event_shape().as_list()[0]
+
+    def sample(self, sample_shape=()):
+        return self.distribution_obj.sample(sample_shape=sample_shape)
+
+    @property
+    def nb_of_indipendent_random_variables(self):
+        return np.array(self.distribution_obj.get_batch_shape()).prod()
+
+    def get_description(self):
+        descriptions = []
+        with tf.Session():
+            flattened_means = tf.reshape(self.mean, [-1, self.sample_space_dimension]).eval()
+            flattened_sigmas = tf.reshape(self.covariance, [-1, self.sample_space_dimension, self.sample_space_dimension]).eval()
+        description_preamble = "Multivariate Normal random variable.\n\n"
+        for j in range(self.nb_of_indipendent_random_variables):
+            description = description_preamble + "\tMean:\n\t\t{0}\n\tCovariance matrix:\n\t\t{1}\n".format(flattened_means[j, :], flattened_sigmas[j, ...])
             descriptions.append(description)
         return descriptions
 

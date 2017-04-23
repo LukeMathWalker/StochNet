@@ -101,7 +101,7 @@ def time_resampling(data, time_step=2**(-7), starting_time=0, end_time=4):
 
 
 def get_endtime_state(data):
-    return data[-1, 1:]
+    return data[-1, :]
 
 
 def get_NN(nb_past_timesteps, nb_features):
@@ -131,9 +131,6 @@ def get_NN_filepath():
 def sample_from_distribution(NN, NN_prediction, nb_samples):
     sess = tf.Session()
     samples = NN.TopLayer_obj.sample(NN_prediction, nb_samples, sess)
-    # for i in range(1, nb_samples):
-    #     sample = NN.TopLayer_obj.sample(NN_prediction, sess)
-    #     samples = np.concatenate((samples, sample), axis=0)
     return samples
 
 
@@ -148,38 +145,36 @@ initial_sequences = initial_sequences[..., 1:]
 print(initial_sequences.shape)
 
 
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_1.20597857058.h5'
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/dill_SIR_-5.21290023088.h5'
 NN = StochNeuralNetwork.load(model_filepath)
 # NN.model.compile(optimizer='adam', loss=NN.TopLayer_obj.loss_function)
 model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/model.h5'
 
-def exp(x):
-    return tf.exp(x)
+get_custom_objects().update({"exp": lambda x: tf.exp(x),
+                             "loss_function": NN.TopLayer_obj.loss_function})
 
-
-NN.load_model(model_filepath, custom_objects={'exp': lambda x: tf.exp(x)})
+NN.load_model(model_filepath)
 initial_sequences_rescaled = NN.scaler.transform(initial_sequences.reshape(-1, nb_features)).reshape(nb_of_initial_configurations, -1, nb_features)
 
 for i in range(nb_of_initial_configurations):
 
     NN_prediction = NN.predict(initial_sequences_rescaled[i][np.newaxis, :, :])
-    NN_samples = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
-    print(NN_samples.shape)
+    NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
+    NN_samples = NN.scaler.inverse_transform(NN_samples_rescaled.reshape(-1, nb_features)).reshape(nb_of_trajectories_for_hist, -1, nb_features)
     S_samples_NN = NN_samples[:, 0, 1]
-    print(S_samples_NN.shape)
     S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
     print(S_NN_hist)
-#
-#     SSA_initial_state = get_endtime_state(initial_sequences[i])
-#     print("Initial state:")
-#     print(SSA_initial_state)
-#     simulation_setting = {'S': SSA_initial_state[0], 'I': SSA_initial_state[1], 'R': SSA_initial_state[2]}
-#     endtime = time_step_size
-#
-#     trajectories = SSA_simulation(simulation_setting, endtime, nb_of_trajectories_for_hist, time_step_size)
-#     # trajectories: [trajectory, timestep, timestamp+features]
-#     # timestamps: [trajectory, timestep, 0]
-#     # proper feature: [trajectory, timestep, 1:]
-#     S_samples_SSA = trajectories[:, -1, 1]
-#     S_SSA_hist = get_histogram(S_samples_SSA, 0.5, 200.5, 200)
-#     print(S_SSA_hist)
+
+    SSA_initial_state = get_endtime_state(initial_sequences[i])
+    print("Initial state:")
+    print(SSA_initial_state)
+    simulation_setting = {'S': SSA_initial_state[0], 'I': SSA_initial_state[1], 'R': SSA_initial_state[2]}
+    endtime = time_step_size
+
+    trajectories = SSA_simulation(simulation_setting, endtime, nb_of_trajectories_for_hist, time_step_size)
+    S_samples_SSA = trajectories[:, -1, 1]
+    S_SSA_hist = get_histogram(S_samples_SSA, 0.5, 200.5, 200)
+    print(S_SSA_hist)
+    S_histogram_distance = histogram_distance(S_NN_hist, S_SSA_hist, 1)
+    print("Histogram distance:")
+    print(S_histogram_distance)

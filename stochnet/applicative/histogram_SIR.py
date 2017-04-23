@@ -152,7 +152,12 @@ model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models
 NN = StochNeuralNetwork.load(model_filepath)
 # NN.model.compile(optimizer='adam', loss=NN.TopLayer_obj.loss_function)
 model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/model.h5'
-NN.load_model(model_filepath, custom_objects={':exp': lambda x: tf.exp(x)})
+
+def exp(x):
+    return tf.exp(x)
+
+
+NN.load_model(model_filepath, custom_objects={':exp': exp})
 initial_sequences_rescaled = NN.scaler.transform(initial_sequences.reshape(-1, nb_features)).reshape(nb_of_initial_configurations, -1, nb_features)
 
 for i in range(nb_of_initial_configurations):

@@ -22,33 +22,43 @@ working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
 dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03.hdf5'
-dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
-
 validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04.hdf5'
-validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
-
 
 nb_past_timesteps = 1
-filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03_no_split.hdf5'
-filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03_w_split.hdf5'
-dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True,
-                              percentage_of_test_data=0.0,
-                              filepath_for_saving_no_split=filepath_for_saving_no_split,
-                              filepath_for_saving_w_split=filepath_for_saving_w_split)
 
-filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04_no_split.hdf5'
-filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04_w_split.hdf5'
-validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True,
-                              percentage_of_test_data=0.0,
-                              filepath_for_saving_no_split=filepath_for_saving_val_no_split,
-                              filepath_for_saving_w_split=filepath_for_saving_val_w_split)
+formatted_for_ML = False
 
-nb_features = dataset.nb_features
+if formatted_for_ML is True:
+    training_filepath = dataset_address
+    validation_filepath = validation_dataset_address
+    nb_features = 3
+else:
+    dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
+    validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
+
+    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03_no_split.hdf5'
+    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03_w_split.hdf5'
+    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True,
+                                  percentage_of_test_data=0.0,
+                                  filepath_for_saving_no_split=filepath_for_saving_no_split,
+                                  filepath_for_saving_w_split=filepath_for_saving_w_split)
+
+    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04_no_split.hdf5'
+    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04_w_split.hdf5'
+    validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True,
+                                  percentage_of_test_data=0.0,
+                                  filepath_for_saving_no_split=filepath_for_saving_val_no_split,
+                                  filepath_for_saving_w_split=filepath_for_saving_val_w_split)
+
+    nb_features = dataset.nb_features
+
+    training_filepath = filepath_for_saving_w_split
+    validation_filepath = filepath_for_saving_val_w_split
 
 batch_size = 64
-training_generator = HDF5Iterator(filepath_for_saving_w_split, batch_size=batch_size,
+training_generator = HDF5Iterator(training_filepath, batch_size=batch_size,
                                   shuffle=True, X_label='X_train', y_label='y_train')
-validation_generator = HDF5Iterator(filepath_for_saving_val_w_split, batch_size=batch_size,
+validation_generator = HDF5Iterator(validation_filepath, batch_size=batch_size,
                                     shuffle=True, X_label='X_train', y_label='y_train')
 
 input_tensor = Input(shape=(nb_past_timesteps, nb_features))

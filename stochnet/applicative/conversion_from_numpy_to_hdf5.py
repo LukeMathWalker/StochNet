@@ -1,6 +1,6 @@
 import numpy as np
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
-from stochnet.utils.conversion import convert_from_numpy_to_hdf5, convert_ML_dataset_from_numpy_to_hdf5
+from stochnet.utils.hdf5 import convert_from_numpy_to_hdf5, convert_ML_dataset_from_numpy_to_hdf5
 
 np_data_filepath = '/home/lucap/Documenti/Data storage/SIR_dataset_medium.npy'
 np_dataset = TimeSeriesDataset(np_data_filepath)

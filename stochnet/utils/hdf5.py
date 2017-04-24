@@ -1,5 +1,5 @@
 import h5py
-from stochnet.classes.Errors import ShapeError
+from tqdm import tqdm
 
 def convert_ML_dataset_from_numpy_to_hdf5(np_X_data, np_y_data, filepath_for_saving):
     f = h5py.File(str(filepath_for_saving), 'a', libver='latest')
@@ -23,12 +23,18 @@ def concatenate_hdf5_datasets(filepath_1, filepath_2, X_label_1='X_data', y_labe
     X_data_2 = f_2[X_label_2]
     y_data_1 = f_1[y_label_1]
     y_data_2 = f_2[y_label_2]
-    nb_samples_old = X_data_1.shape[0]
-    nb_samples_new = X_data_1.shape[0] + X_data_2.shape[0]
-    X_data_1.resize(nb_samples_new, axis=0)
-    y_data_1.resize(nb_samples_new, axis=0)
-    X_data_1[nb_samples_old:, ...] = X_data_2[:, ...]
-    y_data_1[nb_samples_old:, ...] = y_data_2[:, ...]
-    print(X_data_1.shape)
-    print(y_data_1.shape)
+    old_nb_samples = X_data_1.shape[0]
+    new_nb_samples = X_data_1.shape[0] + X_data_2.shape[0]
+    X_data_1.resize(new_nb_samples, axis=0)
+    y_data_1.resize(new_nb_samples, axis=0)
+
+    chunk_size = 10**7
+
+    nb_iteration = (new_nb_samples - old_nb_samples) // chunk_size
+    for i in tqdm(range(nb_iteration)):
+        X_data_1[old_nb_samples + i * chunk_size: old_nb_samples + (i + 1) * chunk_size, ...] = X_data_2[i * chunk_size: (i + 1) * chunk_size, ...]
+        y_data_1[old_nb_samples + i * chunk_size: old_nb_samples + (i + 1) * chunk_size, ...] = y_data_2[i * chunk_size: (i + 1) * chunk_size, ...]
+    if nb_iteration * chunk_size != new_nb_samples - old_nb_samples:
+        X_data_1[old_nb_samples + nb_iteration * chunk_size:, ...] = X_data_2[nb_iteration * chunk_size:, ...]
+        y_data_1[old_nb_samples + nb_iteration * chunk_size:, ...] = y_data_2[nb_iteration * chunk_size:, ...]
     return

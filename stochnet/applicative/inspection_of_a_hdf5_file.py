@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-f = h5py.File('/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_02_w_split.hdf5', 'r')
+f = h5py.File('/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split_no_rescale.hdf5', 'r')
 print('Using .values():')
 print(list(f.values()))
 print('Using .keys():')

@@ -23,11 +23,12 @@ def concatenate_hdf5_datasets(filepath_1, filepath_2, X_label_1='X_data', y_labe
     X_data_2 = f_2[X_label_2]
     y_data_1 = f_1[y_label_1]
     y_data_2 = f_2[y_label_2]
+    nb_samples_old = X_data_1.shape[0]
     nb_samples_new = X_data_1.shape[0] + X_data_2.shape[0]
     X_data_1.resize(nb_samples_new, axis=0)
     y_data_1.resize(nb_samples_new, axis=0)
-    X_data_1[X_data_1.shape[0]:, ...] = X_data_2[:, ...]
-    y_data_1[y_data_1.shape[0]:, ...] = y_data_2[:, ...]
+    X_data_1[nb_samples_old:, ...] = X_data_2[:, ...]
+    y_data_1[nb_samples_old:, ...] = y_data_2[:, ...]
     print(X_data_1.shape)
     print(y_data_1.shape)
     return

@@ -1,4 +1,7 @@
 import os
+import dill
+import h5py
+from tqdm import tqdm
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.classes.TopLayers import MultivariateNormalCholeskyOutputLayer, MultivariateLogNormalOutputLayer, MixtureOutputLayer, MultivariateNormalDiagOutputLayer
@@ -8,6 +11,33 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.constraints import maxnorm
 import tensorflow as tf
 
+def rescale_hdf5(filepath_raw, filepath_rescaled, scaler, X_label='X_train', y_label='y_train'):
+    chunk_size = 10**5
+    f_raw = h5py.File(filepath_raw, 'r')
+    X_data = f_raw[X_label]
+    y_data = f_raw[y_label]
+    f_rescaled = h5py.File(filepath_rescaled, 'a', libver='latest')
+    X_data_rescaled = f_rescaled.create_dataset(X_label, shape=X_data.shape, chunks=True)
+    y_data_rescaled = f_rescaled.create_dataset(y_label, shape=y_data.shape, chunks=True)
+
+    nb_iteration = X_data.shape[0] // chunk_size
+    for i in tqdm(range(nb_iteration)):
+        X_data_slice = X_data[i * chunk_size: (i + 1) * chunk_size, ...]
+        X_flat_data_slice = X_data_slice.reshape(-1, X_data.shape[-1])
+        X_data_rescaled[i * chunk_size: (i + 1) * chunk_size, ...] = scaler.transform(X_flat_data_slice).reshape(X_data_slice.shape)
+
+        y_data_slice = y_data[i * chunk_size: (i + 1) * chunk_size, ...]
+        y_flat_data_slice = y_data_slice.reshape(-1, y_data.shape[-1])
+        y_data_rescaled[i * chunk_size: (i + 1) * chunk_size, ...] = scaler.transform(y_flat_data_slice).reshape(y_data_slice.shape)
+    if nb_iteration * chunk_size != X_data.shape[0]:
+        X_data_slice = X_data[nb_iteration * chunk_size:]
+        X_flat_data_slice = X_data_slice.reshape(-1, X_data.shape[-1])
+        X_data_rescaled[nb_iteration * chunk_size:, ...] = scaler.transform(X_flat_data_slice).reshape(X_data_slice.shape)
+
+        y_data_slice = y_data[nb_iteration * chunk_size:, ...]
+        y_flat_data_slice = y_data_slice.reshape(-1, y_data.shape[-1])
+        y_data_rescaled[nb_iteration * chunk_size:, ...] = scaler.transform(y_flat_data_slice).reshape(y_data_slice.shape)
+    return
 
 # sess = tf.Session()
 # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
@@ -21,17 +51,30 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
-dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_03.hdf5'
-validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_big_04.hdf5'
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split_no_rescale.hdf5'
+validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split_no_rescale.hdf5'
 
 nb_past_timesteps = 1
 
-formatted_for_ML = False
+formatted_for_ML = True
+to_be_scaled = False
 
 if formatted_for_ML is True:
-    training_filepath = dataset_address
-    validation_filepath = validation_dataset_address
     nb_features = 3
+    scaler_address = '/home/lucap/Documenti/Data storage/SIR/scaler_for_timestep_2-5_dataset_v_big_01.h5'
+    with open(scaler_address, 'rb') as f:
+        scaler = dill.load(f)
+    if to_be_scaled is True:
+        rescaled_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split.hdf5'
+        rescaled_validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split.hdf5'
+        rescale_hdf5(dataset_address, rescaled_dataset_address, scaler)
+        # rescale_hdf5(validation_dataset_address, rescaled_validation_dataset_address, scaler)
+        training_filepath = rescaled_dataset_address
+        validation_filepath = rescaled_validation_dataset_address
+    else:
+        training_filepath = dataset_address
+        validation_filepath = validation_dataset_address
+
 else:
     dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
     validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
@@ -54,6 +97,7 @@ else:
 
     training_filepath = filepath_for_saving_w_split
     validation_filepath = filepath_for_saving_val_w_split
+    scaler = dataset.scaler
 
 batch_size = 64
 training_generator = HDF5Iterator(training_filepath, batch_size=batch_size,
@@ -77,7 +121,7 @@ TopModel_obj = MixtureOutputLayer(components)
 # TopModel_obj = MultivariateNormalDiagOutputLayer(nb_features)
 
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
-NN.memorize_scaler(dataset.scaler)
+NN.memorize_scaler(scaler)
 
 callbacks = []
 callbacks.append(EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min'))

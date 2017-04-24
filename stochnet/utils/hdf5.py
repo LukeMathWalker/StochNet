@@ -32,12 +32,6 @@ def concatenate_hdf5_datasets(filepath_1, filepath_2, X_label_1='X_data', y_labe
 
     nb_iteration = (new_nb_samples - old_nb_samples) // chunk_size
     for i in tqdm(range(nb_iteration)):
-        print('\n')
-        print(X_data_1[old_nb_samples + i * chunk_size: old_nb_samples + (i + 1) * chunk_size, ...].shape)
-        print(X_data_2[i * chunk_size: (i + 1) * chunk_size, ...].shape)
-        print('\n')
-        print(y_data_1[old_nb_samples + i * chunk_size: old_nb_samples + (i + 1) * chunk_size, ...].shape)
-        print(y_data_2[i * chunk_size: (i + 1) * chunk_size, ...].shape)
         X_data_1[old_nb_samples + i * chunk_size: old_nb_samples + (i + 1) * chunk_size, ...] = X_data_2[i * chunk_size: (i + 1) * chunk_size, ...]
         y_data_1[old_nb_samples + i * chunk_size: old_nb_samples + (i + 1) * chunk_size, ...] = y_data_2[i * chunk_size: (i + 1) * chunk_size, ...]
     if nb_iteration * chunk_size != new_nb_samples - old_nb_samples:

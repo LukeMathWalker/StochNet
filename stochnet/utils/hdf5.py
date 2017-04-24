@@ -28,4 +28,6 @@ def concatenate_hdf5_datasets(filepath_1, filepath_2, X_label_1='X_data', y_labe
     y_data_1.resize(nb_samples_new, axis=0)
     X_data_1[X_data_1.shape[0]:, ...] = X_data_2
     y_data_1[y_data_1.shape[0]:, ...] = y_data_2
+    print(X_data_1.shape)
+    print(y_data_1.shape)
     return

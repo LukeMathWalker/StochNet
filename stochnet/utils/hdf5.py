@@ -28,7 +28,7 @@ def concatenate_hdf5_datasets(filepath_1, filepath_2, X_label_1='X_data', y_labe
     X_data_1.resize(new_nb_samples, axis=0)
     y_data_1.resize(new_nb_samples, axis=0)
 
-    chunk_size = 10**7
+    chunk_size = 10**5
 
     nb_iteration = (new_nb_samples - old_nb_samples) // chunk_size
     for i in tqdm(range(nb_iteration)):

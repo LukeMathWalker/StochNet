@@ -89,8 +89,8 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
 
 np.set_printoptions(suppress=True)
 
-nb_of_trajectories_for_hist = 10**0
-nb_of_initial_configurations = 1
+nb_of_trajectories_for_hist = 10**2
+nb_of_initial_configurations = 10
 # nb_past_timesteps = 1
 nb_features = 3
 time_step_size = 2**(-5)

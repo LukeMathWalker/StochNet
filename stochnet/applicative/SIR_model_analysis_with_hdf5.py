@@ -51,8 +51,8 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
-dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split_no_rescale.hdf5'
-validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split_no_rescale.hdf5'
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split.hdf5'
+validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dataset_v_big_01_w_split.hdf5'
 
 nb_past_timesteps = 1
 
@@ -125,7 +125,7 @@ NN.memorize_scaler(scaler)
 
 callbacks = []
 callbacks.append(EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min'))
-checkpoint_filepath = os.path.join(basename, 'models/model_08/best_weights.h5')
+checkpoint_filepath = os.path.join(basename, 'models/model_09/best_weights.h5')
 callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
                                  verbose=1, save_best_only=True,
                                  save_weights_only=True, mode='min'))
@@ -137,10 +137,10 @@ lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
 NN.load_weights(checkpoint_filepath)
-model_filepath = os.path.join(basename, 'models/model_08/model.h5')
+model_filepath = os.path.join(basename, 'models/model_09/model.h5')
 NN.save_model(model_filepath)
 
-filepath = os.path.join(basename, 'models/model_08/dill_SIR_' + str(lowest_val_loss) + '.h5')
+filepath = os.path.join(basename, 'models/model_09/dill_SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath)
 
 test_batch_x, test_batch_y = next(validation_generator)

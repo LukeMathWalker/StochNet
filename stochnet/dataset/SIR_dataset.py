@@ -6,7 +6,7 @@ import os
 import shutil
 
 
-def time_resampling(data, time_step=2**(-7), starting_time=0, end_time=4):
+def time_resampling(data, time_step=2**(-5), starting_time=0, end_time=4):
     time_index = 0
     # Il nuovo array dei tempi
     time_array = np.linspace(starting_time, end_time, num=(end_time - starting_time) / time_step + 1)
@@ -15,18 +15,12 @@ def time_resampling(data, time_step=2**(-7), starting_time=0, end_time=4):
     new_data = np.zeros((time_array.shape[0], data.shape[1]))
     new_data[:, 0] = time_array
     for j in range(len(time_array)):
-        # se la simulazione non presenta più eventi prima che sia arrivato l'end_time
-        # continuiamo a copiare i valori relativi all'ultimo evento fino a riempire l'array
+        while time_index < data.shape[0] - 1 and data[time_index + 1][0] < time_array[j]:
+            time_index = time_index + 1
         if time_index == data.shape[0] - 1:
             new_data[j, 1:] = data[time_index, 1:]
         else:
-            # se ci troviamo prima dell'evento di indice time_index+1 copiamo i numeri di molecole precedenti all'evento
-            if data[time_index + 1][0] > time_array[j]:
-                new_data[j, 1:] = data[time_index, 1:]
-            # altrimenti aggiorniamo il time_index e copiamo i numeri di molecole corrispondenti all'evento di indice time_index (già aumentato di 1)
-            else:
-                time_index = time_index + 1
-                new_data[j, 1:] = data[time_index, 1:]
+            new_data[j, 1:] = data[time_index, 1:]
     return new_data
 
 

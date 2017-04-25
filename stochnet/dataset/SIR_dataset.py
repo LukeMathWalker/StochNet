@@ -4,6 +4,7 @@ import stochpy
 import pandas as pd
 import os
 import shutil
+from tqdm import tqdm
 
 
 def time_resampling(data, time_step=2**(-5), starting_time=0, end_time=4):
@@ -30,7 +31,7 @@ def set_initial_parameters(simulation_obj, setting_collection, current_index):
     R = setting_collection[current_index]['R']
     smod.ChangeInitialSpeciesCopyNumber("S", S)
     smod.ChangeInitialSpeciesCopyNumber("I", I)
-    smod.ChangeInitialSpeciesCopyNumber("R", I)
+    smod.ChangeInitialSpeciesCopyNumber("R", R)
     smod.ChangeInitialSpeciesCopyNumber("N", S + I + R)
     return
 
@@ -46,10 +47,10 @@ def generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=10)
     return simulation_settings
 
 
-nb_of_settings = 30000
-trajectories_nb = 100
+nb_of_settings = 300
+trajectories_nb = 1000
 simulation_settings = generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=nb_of_settings)
-endtime = 2**(-4)
+endtime = 1
 time_step_for_resampling = 2**(-5)
 
 smod = stochpy.SSA()
@@ -57,7 +58,7 @@ smod.Model("SIR.psc")
 smod.ChangeParameter("Beta", 3)
 smod.ChangeParameter("Gamma", 1)
 
-for i in range(nb_of_settings):
+for i in tqdm(range(nb_of_settings)):
     set_initial_parameters(smod, simulation_settings, i)
 
     smod.DoStochSim(method="direct", trajectories=trajectories_nb, mode="time", end=endtime)
@@ -89,5 +90,5 @@ for i in range(nb_of_settings):
         final_dataset = np.concatenate((final_dataset, partial_dataset), axis=0)
     os.remove(partial_dataset_filepath)
 
-with open('SIR_dataset_fast.npy', 'wb') as dataset_filepath:
+with open('SIR_dataset_timestep_2-5_01.npy', 'wb') as dataset_filepath:
     np.save(dataset_filepath, final_dataset)

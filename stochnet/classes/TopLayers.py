@@ -113,8 +113,10 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
 
 class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
 
-    def __init__(self, sample_space_dimension):
+    def __init__(self, sample_space_dimension, mu_regularizer=None, diag_regularizer=None):
         self.sample_space_dimension = sample_space_dimension
+        self.mu_regularizer = mu_regularizer
+        self.diag_regularizer = mu_regularizer
 
     @property
     def sample_space_dimension(self):
@@ -129,8 +131,8 @@ class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
             raise ValueError('''The sample space dimension for a multivariate normal variable needs to be at least two!''')
 
     def add_layer_on_top(self, base_model):
-        mu = Dense(self._sample_space_dimension, activation=None)(base_model)
-        diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
+        mu = Dense(self._sample_space_dimension, activation=None, activity_regularizer=self.mu_regularizer)(base_model)
+        diag = Dense(self._sample_space_dimension, activation=tf.exp, activity_regularizer=self.diag_regularizer)(base_model)
         return concatenate([mu, diag], axis=-1)
 
     def get_tensor_random_variable(self, NN_prediction):

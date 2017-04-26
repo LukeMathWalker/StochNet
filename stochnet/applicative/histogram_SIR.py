@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.random import randint
+import matplotlib.pyplot as plt
 
 from keras.layers import Input, LSTM, Dense, Dropout, Flatten
 from keras.constraints import maxnorm
@@ -86,11 +87,10 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
     samples = NN.TopLayer_obj.sample(NN_prediction, nb_samples, sess)
     return samples
 
-
 np.set_printoptions(suppress=True)
 
 nb_of_trajectories_for_hist = 10**3
-nb_of_initial_configurations = 40
+nb_of_initial_configurations = 5
 # nb_past_timesteps = 1
 nb_features = 3
 time_step_size = 2**(-5)
@@ -99,10 +99,10 @@ time_step_size = 2**(-5)
 initial_sequences = generate_simulation_settings_array(nb_of_settings=nb_of_initial_configurations)
 initial_sequences = initial_sequences.reshape(nb_of_initial_configurations, 1, nb_features)
 
-stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_02/SIR_-10.2944394989.h5'
+stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_05/SIR_-8.17344167662.h5'
 NN = StochNeuralNetwork.load(stoch_filepath)
 
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_02/model.h5'
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_05/model.h5'
 
 get_custom_objects().update({"exp": lambda x: tf.exp(x),
                              "loss_function": NN.TopLayer_obj.loss_function})
@@ -118,18 +118,22 @@ for i in range(nb_of_initial_configurations):
     NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
     NN_samples = NN.scaler.inverse_transform(NN_samples_rescaled.reshape(-1, nb_features)).reshape(nb_of_trajectories_for_hist, -1, nb_features)
     S_samples_NN = NN_samples[:, 0, 0]
-    S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
+    S_NN_hist = get_histogram(S_samples_NN, -0.5, 200.5, 201)
     print(S_NN_hist)
+    plt.figure(i)
+    plt.plot(S_NN_hist)
 
     simulation_setting = {'S': initial_sequences[i, 0, 0], 'I': initial_sequences[i, 0, 1], 'R': initial_sequences[i, 0, 2]}
     endtime = time_step_size
 
     trajectories = SSA_simulation(simulation_setting, endtime, nb_of_trajectories_for_hist, time_step_size)
     S_samples_SSA = trajectories[:, -1, 1]
-    S_SSA_hist = get_histogram(S_samples_SSA, 0.5, 200.5, 200)
+    S_SSA_hist = get_histogram(S_samples_SSA, -0.5, 200.5, 201)
     print(S_SSA_hist)
+    plt.plot(S_SSA_hist)
+    plt.savefig('test_' + str(i) + '.png', bbox_inches='tight')
     S_histogram_distance[i] = histogram_distance(S_NN_hist, S_SSA_hist, 1)
-    print("Histogram distance:")
-    print(S_histogram_distance)
+    # print("Histogram distance:")
+    # print(S_histogram_distance)
 print(S_histogram_distance)
 print(np.mean(S_histogram_distance))

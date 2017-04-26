@@ -52,8 +52,8 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
-dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_02.hdf5'
-validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_01.hdf5'
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06.hdf5'
+validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_05.hdf5'
 
 nb_past_timesteps = 1
 
@@ -80,15 +80,15 @@ else:
     dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
     validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
 
-    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_02_no_split.hdf5'
-    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_02_w_split.hdf5'
+    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_no_split.hdf5'
+    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_w_split.hdf5'
     dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_no_split,
                                   filepath_for_saving_w_split=filepath_for_saving_w_split)
 
-    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_01_no_split.hdf5'
-    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_01_w_split.hdf5'
+    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_05_no_split.hdf5'
+    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_05_w_split.hdf5'
     validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_val_no_split,
@@ -109,13 +109,15 @@ validation_generator = HDF5Iterator(validation_filepath, batch_size=batch_size,
 input_tensor = Input(shape=(nb_past_timesteps, nb_features))
 flatten1 = Flatten()(input_tensor)
 dense1 = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(flatten1)
-dense2 = Dense(1024, kernel_constraint=maxnorm(3), activation='relu')(dense1)
-NN_body = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(dense2)
+dropout1 = Dropout(0.3)(dense1)
+dense2 = Dense(1024, kernel_constraint=maxnorm(3), activation='relu')(dropout1)
+dropout2 = Dropout(0.7)(dense2)
+NN_body = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(dropout2)
 
-number_of_components = 3
+number_of_components = 2
 components = []
 for j in range(number_of_components):
-    components.append(MultivariateLogNormalOutputLayer(nb_features))
+    components.append(MultivariateNormalDiagOutputLayer(nb_features))
 
 TopModel_obj = MixtureOutputLayer(components)
 
@@ -126,7 +128,7 @@ NN.memorize_scaler(scaler)
 
 callbacks = []
 callbacks.append(EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min'))
-checkpoint_filepath = os.path.join(basename, 'models/model_02/best_weights.h5')
+checkpoint_filepath = os.path.join(basename, 'models/model_05/best_weights.h5')
 callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
                                  verbose=1, save_best_only=True,
                                  save_weights_only=True, mode='min'))
@@ -138,10 +140,10 @@ lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
 NN.load_weights(checkpoint_filepath)
-model_filepath = os.path.join(basename, 'models/model_02/model.h5')
+model_filepath = os.path.join(basename, 'models/model_05/model.h5')
 NN.save_model(model_filepath)
 
-filepath = os.path.join(basename, 'models/model_02/SIR_' + str(lowest_val_loss) + '.h5')
+filepath = os.path.join(basename, 'models/model_05/SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath)
 
 test_batch_x, test_batch_y = next(validation_generator)

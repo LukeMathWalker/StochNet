@@ -90,7 +90,7 @@ def sample_from_distribution(NN, NN_prediction, nb_samples):
 np.set_printoptions(suppress=True)
 
 nb_of_trajectories_for_hist = 10**3
-nb_of_initial_configurations = 10
+nb_of_initial_configurations = 40
 # nb_past_timesteps = 1
 nb_features = 3
 time_step_size = 2**(-5)
@@ -99,10 +99,10 @@ time_step_size = 2**(-5)
 initial_sequences = generate_simulation_settings_array(nb_of_settings=nb_of_initial_configurations)
 initial_sequences = initial_sequences.reshape(nb_of_initial_configurations, 1, nb_features)
 
-stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/SIR_-6.32953864861.h5'
+stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_02/SIR_-10.2944394989.h5'
 NN = StochNeuralNetwork.load(stoch_filepath)
 
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_01/model.h5'
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_02/model.h5'
 
 get_custom_objects().update({"exp": lambda x: tf.exp(x),
                              "loss_function": NN.TopLayer_obj.loss_function})
@@ -113,10 +113,11 @@ S_histogram_distance = np.zeros(nb_of_initial_configurations)
 
 for i in range(nb_of_initial_configurations):
     print('\n\n')
+    print(initial_sequences[i])
     NN_prediction = NN.predict(initial_sequences_rescaled[i][np.newaxis, :, :])
     NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
     NN_samples = NN.scaler.inverse_transform(NN_samples_rescaled.reshape(-1, nb_features)).reshape(nb_of_trajectories_for_hist, -1, nb_features)
-    S_samples_NN = NN_samples[:, 0, 1]
+    S_samples_NN = NN_samples[:, 0, 0]
     S_NN_hist = get_histogram(S_samples_NN, 0.5, 200.5, 200)
     print(S_NN_hist)
 

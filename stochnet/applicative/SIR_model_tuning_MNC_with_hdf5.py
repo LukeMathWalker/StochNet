@@ -4,7 +4,7 @@ from tabulate import tabulate
 from hyperopt import Trials, STATUS_OK, tpe
 from hyperas import optim
 from hyperas.distributions import choice, uniform
-from keras.layers import Dense, Dropout, Input, LSTM
+from keras.layers import Dense, Dropout, Input, LSTM, Flatten
 from keras.constraints import maxnorm
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
@@ -21,24 +21,24 @@ def data():
     won't reload data for each evaluation run.
     '''
 
-    dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_02.hdf5'
-    validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_01.hdf5'
+    dataset_address = '/home/lpalmier/workspace/Data/SIR/SIR_dataset_timestep_2-5_06.hdf5'
+    validation_dataset_address = '/home/lpalmier/workspace/Data/SIR/SIR_dataset_timestep_2-5_02.hdf5'
 
     nb_past_timesteps = 1
 
     dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
     validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
 
-    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_02_no_split.hdf5'
-    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_02_w_split.hdf5'
-    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
+    filepath_for_saving_no_split = '/home/lpalmier/workspace/Data/SIR/SIR_dataset_timestep_2-5_06_no_split.hdf5'
+    filepath_for_saving_w_split = '/home/lpalmier/workspace/Data/SIR/SIR_dataset_timestep_2-5_06_w_split.hdf5'
+    dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity=None,
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_no_split,
                                   filepath_for_saving_w_split=filepath_for_saving_w_split)
 
-    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_01_no_split.hdf5'
-    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_01_w_split.hdf5'
-    validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
+    filepath_for_saving_val_no_split = '/home/lpalmier/workspace/Data/SIR/SIR_dataset_timestep_2-5_02_no_split.hdf5'
+    filepath_for_saving_val_w_split = '/home/lpalmier/workspace/Data/SIR/SIR_dataset_timestep_2-5_02_w_split.hdf5'
+    validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity=None,
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_val_no_split,
                                   filepath_for_saving_w_split=filepath_for_saving_val_w_split)
@@ -67,7 +67,8 @@ def model(X_train, Y_train, X_test, Y_test):
         - model: specify the model just created so that we can later use it again.
     """
     input_tensor = Input(shape=(1, 3))
-    hidden1 = Dense({{choice([64, 128, 256, 512, 1024, 2048, 4096])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(input_tensor)
+    flatten1 = Flatten()(input_tensor)
+    hidden1 = Dense({{choice([64, 128, 256, 512, 1024, 2048, 4096])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(flatten1)
     dropout1 = Dropout({{uniform(0.2, 0.7)}})(hidden1)
     dense2 = Dense({{choice([64, 128, 256, 512, 1024])}}, kernel_constraint=maxnorm({{uniform(1, 3)}}))(dropout1)
     dropout2 = Dropout({{uniform(0.2, 0.7)}})(dense2)
@@ -84,8 +85,8 @@ def model(X_train, Y_train, X_test, Y_test):
     callbacks = []
     callbacks.append(EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min'))
     result = NN.fit_generator(X_train, samples_per_epoch=10**5,
-                    epochs={{choice([3, 5, 8])}},
-                    verbose=2,
+                    epochs={{choice([3, 6, 9, 12])}},
+                    verbose=1,
                     callbacks=callbacks,
                     validation_generator=X_test)
 

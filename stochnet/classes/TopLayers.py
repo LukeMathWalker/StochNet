@@ -116,7 +116,7 @@ class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
     def __init__(self, sample_space_dimension, mu_regularizer=None, diag_regularizer=None):
         self.sample_space_dimension = sample_space_dimension
         self.mu_regularizer = mu_regularizer
-        self.diag_regularizer = mu_regularizer
+        self.diag_regularizer = diag_regularizer
 
     @property
     def sample_space_dimension(self):

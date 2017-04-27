@@ -9,6 +9,7 @@ from stochnet.utils.iterator import HDF5Iterator
 from keras.layers import Input, LSTM, Dense, Dropout, Flatten
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.constraints import maxnorm
+from keras.regularizers import l2
 import tensorflow as tf
 
 def rescale_hdf5(filepath_raw, filepath_rescaled, scaler, X_label='X_train', y_label='y_train'):
@@ -52,8 +53,8 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
-dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06.hdf5'
-validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_05.hdf5'
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_07.hdf5'
+validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06.hdf5'
 
 nb_past_timesteps = 1
 
@@ -80,15 +81,15 @@ else:
     dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
     validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
 
-    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_no_split.hdf5'
-    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_w_split.hdf5'
+    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_07_no_split.hdf5'
+    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_07_w_split.hdf5'
     dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_no_split,
                                   filepath_for_saving_w_split=filepath_for_saving_w_split)
 
-    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_05_no_split.hdf5'
-    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_05_w_split.hdf5'
+    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_no_split.hdf5'
+    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_w_split.hdf5'
     validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_val_no_split,
@@ -117,7 +118,7 @@ NN_body = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(dropout2)
 number_of_components = 2
 components = []
 for j in range(number_of_components):
-    components.append(MultivariateNormalDiagOutputLayer(nb_features))
+    components.append(MultivariateNormalDiagOutputLayer(nb_features, diag_regularizer=l2(10000000.)))
 
 TopModel_obj = MixtureOutputLayer(components)
 
@@ -128,22 +129,22 @@ NN.memorize_scaler(scaler)
 
 callbacks = []
 callbacks.append(EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min'))
-checkpoint_filepath = os.path.join(basename, 'models/model_05/best_weights.h5')
+checkpoint_filepath = os.path.join(basename, 'models/model_08/best_weights.h5')
 callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
                                  verbose=1, save_best_only=True,
                                  save_weights_only=True, mode='min'))
 result = NN.fit_generator(training_generator=training_generator,
-                          samples_per_epoch=10**5, epochs=80, verbose=1,
+                          samples_per_epoch=10**5, epochs=6, verbose=1,
                           callbacks=callbacks, validation_generator=validation_generator,
                           nb_val_samples=10**3)
 lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
 NN.load_weights(checkpoint_filepath)
-model_filepath = os.path.join(basename, 'models/model_05/model.h5')
+model_filepath = os.path.join(basename, 'models/model_08/model.h5')
 NN.save_model(model_filepath)
 
-filepath = os.path.join(basename, 'models/model_05/SIR_' + str(lowest_val_loss) + '.h5')
+filepath = os.path.join(basename, 'models/model_08/SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath)
 
 test_batch_x, test_batch_y = next(validation_generator)

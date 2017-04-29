@@ -82,12 +82,15 @@ def get_endtime_state(data):
     return data[-1, :]
 
 
-def sample_from_distribution(NN, NN_prediction, nb_samples):
-    sess = tf.Session()
+def sample_from_distribution(NN, NN_prediction, nb_samples, sess=None):
+    if sess is None:
+        sess = tf.Session()
     samples = NN.TopLayer_obj.sample(NN_prediction, nb_samples, sess)
     return samples
 
+
 np.set_printoptions(suppress=True)
+sess = tf.Session()
 
 nb_of_trajectories_for_hist = 10**3
 nb_of_initial_configurations = 15
@@ -99,10 +102,10 @@ time_step_size = 2**(-5)
 initial_sequences = generate_simulation_settings_array(nb_of_settings=nb_of_initial_configurations)
 initial_sequences = initial_sequences.reshape(nb_of_initial_configurations, 1, nb_features)
 
-stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_06/SIR_-7.42809396791.h5'
+stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_14/SIR_-1.39505192721.h5'
 NN = StochNeuralNetwork.load(stoch_filepath)
 
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_06/model.h5'
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/model_14/model.h5'
 
 get_custom_objects().update({"exp": lambda x: tf.exp(x),
                              "loss_function": NN.TopLayer_obj.loss_function})
@@ -115,7 +118,7 @@ for i in range(nb_of_initial_configurations):
     print('\n\n')
     print(initial_sequences[i])
     NN_prediction = NN.predict(initial_sequences_rescaled[i][np.newaxis, :, :])
-    NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist)
+    NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_of_trajectories_for_hist, sess)
     NN_samples = NN.scaler.inverse_transform(NN_samples_rescaled.reshape(-1, nb_features)).reshape(nb_of_trajectories_for_hist, -1, nb_features)
     S_samples_NN = NN_samples[:, 0, 0]
     S_NN_hist = get_histogram(S_samples_NN, -0.5, 200.5, 201)
@@ -131,7 +134,9 @@ for i in range(nb_of_initial_configurations):
     S_SSA_hist = get_histogram(S_samples_SSA, -0.5, 200.5, 201)
     print(S_SSA_hist)
     plt.plot(S_SSA_hist, label='SSA')
+    plt.legend()
     plt.savefig('test_' + str(i) + '.png', bbox_inches='tight')
+
     plt.close()
     S_histogram_distance[i] = histogram_distance(S_NN_hist, S_SSA_hist, 1)
     # print("Histogram distance:")

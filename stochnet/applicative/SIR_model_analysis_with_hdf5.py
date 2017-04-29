@@ -12,6 +12,11 @@ from keras.constraints import maxnorm
 from keras.regularizers import l2
 import tensorflow as tf
 
+
+def ensure_dir(file_path):
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
+
 def rescale_hdf5(filepath_raw, filepath_rescaled, scaler, X_label='X_train', y_label='y_train'):
     chunk_size = 10**5
     f_raw = h5py.File(filepath_raw, 'r')
@@ -117,8 +122,8 @@ NN_body = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(dropout2)
 
 number_of_components = 2
 components = []
-for j in range(number_of_components):
-    components.append(MultivariateNormalDiagOutputLayer(nb_features, diag_regularizer=l2(10000000.)))
+components.append(MultivariateNormalDiagOutputLayer(nb_features, diag_regularizer=None))
+components.append(MultivariateNormalDiagOutputLayer(nb_features, diag_regularizer=None))
 
 TopModel_obj = MixtureOutputLayer(components)
 
@@ -127,24 +132,28 @@ TopModel_obj = MixtureOutputLayer(components)
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 NN.memorize_scaler(scaler)
 
+model_directory = os.path.join(basename, 'models/model_14')
+ensure_dir(model_directory)
+print(model_directory)
+
 callbacks = []
 callbacks.append(EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min'))
-checkpoint_filepath = os.path.join(basename, 'models/model_08/best_weights.h5')
+checkpoint_filepath = os.path.join(model_directory, 'best_weights.h5')
 callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
                                  verbose=1, save_best_only=True,
                                  save_weights_only=True, mode='min'))
 result = NN.fit_generator(training_generator=training_generator,
-                          samples_per_epoch=10**5, epochs=6, verbose=1,
+                          samples_per_epoch=10**5, epochs=80, verbose=1,
                           callbacks=callbacks, validation_generator=validation_generator,
                           nb_val_samples=10**3)
 lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 
 NN.load_weights(checkpoint_filepath)
-model_filepath = os.path.join(basename, 'models/model_08/model.h5')
+model_filepath = os.path.join(model_directory, 'model.h5')
 NN.save_model(model_filepath)
 
-filepath = os.path.join(basename, 'models/model_08/SIR_' + str(lowest_val_loss) + '.h5')
+filepath = os.path.join(model_directory, 'SIR_' + str(lowest_val_loss) + '.h5')
 NN.save(filepath)
 
 test_batch_x, test_batch_y = next(validation_generator)

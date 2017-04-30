@@ -12,7 +12,6 @@ def prop_recover(system_state):
     return 1. * system_state[:, 1]
 
 
-
 nb_trajectories = 1000
 nb_reactions = 2
 endtime = tf.constant(1.)
@@ -34,6 +33,7 @@ null_update = tf.constant([0., 0., 0.])
 infection_update = tf.constant([-1., 1., 0.])
 recover_update = tf.constant([0., -1., 1.])
 updates = tf.stack([null_update, infection_update, recover_update], axis=0)
+
 
 propensity_infection = prop_infection(system_state)
 propensity_recover = prop_recover(system_state)

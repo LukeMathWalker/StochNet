@@ -1,5 +1,6 @@
 import gillespy
 import numpy as np
+import os
 from tqdm import tqdm
 
 
@@ -34,7 +35,7 @@ class SIR(gillespy.Model):
                                     products={R: 1},
                                     rate=gamma)
         self.add_reaction([infection, recover])
-        self.timespan(np.linspace(0, 20, 2))
+        self.timespan(np.linspace(0, 5, 12))
 
     def set_species_initial_value(self, species_initial_value):
         self.listOfSpecies['S'].initial_value = species_initial_value[0]
@@ -44,15 +45,30 @@ class SIR(gillespy.Model):
 
 
 if __name__ == '__main__':
-    species_initial_value = [100, 50, 80]
     test = SIR()
 
-    nb_settings = 3
-    settings = [[10, 20, 30], [20, 30, 40], [30, 40, 50]]
-    num_trajectories = 1000
+    nb_settings = 1
+    settings = np.random.randint(low=30, high=200, size=(nb_settings, 3))
+    num_trajectories = 1
     for j in tqdm(range(nb_settings)):
         species_initial_value = settings[j]
         test.set_species_initial_value(species_initial_value)
-        simple_trajectories = test.run(number_of_trajectories=num_trajectories)
-        # print(np.array(simple_trajectories).shape)
-        # print(simple_trajectories[0])
+        trajectories = test.run(number_of_trajectories=num_trajectories, show_labels=False)
+        dataset = np.array(trajectories)
+        print(dataset)
+    #     dataset_filepath = 'dataset_' + str(j) + '.npy'
+    #     with open(dataset_filepath, 'wb'):
+    #         np.save(dataset_filepath, dataset)
+    #
+    # for i in range(nb_settings):
+    #     partial_dataset_filepath = 'dataset_' + str(i) + '.npy'
+    #     with open(partial_dataset_filepath, 'rb'):
+    #         partial_dataset = np.load(partial_dataset_filepath)
+    #     if i == 0:
+    #         final_dataset = partial_dataset
+    #     else:
+    #         final_dataset = np.concatenate((final_dataset, partial_dataset), axis=0)
+    #     os.remove(partial_dataset_filepath)
+    #
+    # with open('SIR_dataset_timestep_2-1_05.npy', 'wb') as dataset_filepath:
+    #     np.save(dataset_filepath, final_dataset)

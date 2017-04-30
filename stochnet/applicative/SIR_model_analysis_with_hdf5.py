@@ -50,16 +50,12 @@ def rescale_hdf5(filepath_raw, filepath_rescaled, scaler, X_label='X_train', y_l
 # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
 
-# We need to get to the proper directory first
-# We are in ./stochnet/applicative
-# We want to be in ./stochnet
-# os.getcwd returns the directory we are working in and we use dirname to get its parent directory
 current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
-dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_07.hdf5'
-validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06.hdf5'
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_01_no_timestamp.hdf5'
+validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_02_no_timestamp.hdf5'
 
 nb_past_timesteps = 1
 
@@ -83,18 +79,18 @@ if formatted_for_ML is True:
         validation_filepath = validation_dataset_address
 
 else:
-    dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5')
-    validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5')
+    dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5', with_timestamps=False)
+    validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5', with_timestamps=False)
 
-    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_07_no_split.hdf5'
-    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_07_w_split.hdf5'
+    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_01_no_timestamp_no_split.hdf5'
+    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_01_no_timestamp_w_split.hdf5'
     dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_no_split,
                                   filepath_for_saving_w_split=filepath_for_saving_w_split)
 
-    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_no_split.hdf5'
-    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-5_06_w_split.hdf5'
+    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_02_no_timestamp_no_split.hdf5'
+    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_02_no_timestamp_w_split.hdf5'
     validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_val_no_split,
@@ -132,7 +128,7 @@ TopModel_obj = MixtureOutputLayer(components)
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 NN.memorize_scaler(scaler)
 
-model_directory = os.path.join(basename, 'models/model_14')
+model_directory = os.path.join(basename, 'models/SIR_timestep_2-1/model_01')
 ensure_dir(model_directory)
 print(model_directory)
 

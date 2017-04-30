@@ -6,7 +6,7 @@ final_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-5_dat
 
 x_dummy_data = np.ones((1, 1, 3))
 y_dummy_data = np.ones((1, 3))
-
+# FIX
 f = h5py.File(final_dataset_address, 'a', libver='latest')
 f.create_dataset('X_train', data=x_dummy_data, maxshape=(None, 1, 3))
 f.create_dataset('y_train', data=y_dummy_data, maxshape=(None, 3))

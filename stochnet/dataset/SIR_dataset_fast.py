@@ -41,8 +41,8 @@ def generate_simulation_settings(min_value=10, max_value=200, nb_of_settings=10)
     return simulation_settings
 
 
-nb_of_settings = 3000
-trajectories_nb = 100
+nb_of_settings = 20
+trajectories_nb = 1000
 simulation_settings = generate_simulation_settings(min_value=7, max_value=200, nb_of_settings=nb_of_settings)
 time_step_for_resampling = 2**(-5)
 

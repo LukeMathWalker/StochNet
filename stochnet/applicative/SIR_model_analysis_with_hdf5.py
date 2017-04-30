@@ -54,8 +54,8 @@ current = os.getcwd()
 working_path = os.path.dirname(current)
 basename = os.path.abspath(working_path)
 
-dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_01_no_timestamp.hdf5'
-validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_02_no_timestamp.hdf5'
+dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_dataset_01+02+03+04_no_timestamp.hdf5'
+validation_dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_05_no_timestamp.hdf5'
 
 nb_past_timesteps = 1
 
@@ -82,15 +82,15 @@ else:
     dataset = TimeSeriesDataset(dataset_address=dataset_address, data_format='hdf5', with_timestamps=False)
     validation_dataset = TimeSeriesDataset(dataset_address=validation_dataset_address, data_format='hdf5', with_timestamps=False)
 
-    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_01_no_timestamp_no_split.hdf5'
-    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_01_no_timestamp_w_split.hdf5'
+    filepath_for_saving_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_dataset_01+02+03+04_no_timestamp_no_split.hdf5'
+    filepath_for_saving_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_dataset_01+02+03+04_no_timestamp_w_split.hdf5'
     dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_no_split,
                                   filepath_for_saving_w_split=filepath_for_saving_w_split)
 
-    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_02_no_timestamp_no_split.hdf5'
-    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_02_no_timestamp_w_split.hdf5'
+    filepath_for_saving_val_no_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_05_no_timestamp_no_split.hdf5'
+    filepath_for_saving_val_w_split = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_05_no_timestamp_w_split.hdf5'
     validation_dataset.format_dataset_for_ML(nb_past_timesteps=nb_past_timesteps, must_be_rescaled=True, positivity='needed',
                                   percentage_of_test_data=0.0,
                                   filepath_for_saving_no_split=filepath_for_saving_val_no_split,
@@ -118,8 +118,8 @@ NN_body = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(dropout2)
 
 number_of_components = 2
 components = []
-components.append(MultivariateNormalDiagOutputLayer(nb_features, diag_regularizer=None))
-components.append(MultivariateNormalDiagOutputLayer(nb_features, diag_regularizer=None))
+components.append(MultivariateLogNormalOutputLayer(nb_features))
+components.append(MultivariateLogNormalOutputLayer(nb_features))
 
 TopModel_obj = MixtureOutputLayer(components)
 
@@ -128,20 +128,20 @@ TopModel_obj = MixtureOutputLayer(components)
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 NN.memorize_scaler(scaler)
 
-model_directory = os.path.join(basename, 'models/SIR_timestep_2-1/model_01')
+model_directory = os.path.join(basename, 'models/SIR_timestep_2-1/model_02')
 ensure_dir(model_directory)
 print(model_directory)
 
 callbacks = []
-callbacks.append(EarlyStopping(monitor='val_loss', patience=6, verbose=1, mode='min'))
+callbacks.append(EarlyStopping(monitor='val_loss', patience=5, verbose=1, mode='min'))
 checkpoint_filepath = os.path.join(model_directory, 'best_weights.h5')
 callbacks.append(ModelCheckpoint(checkpoint_filepath, monitor='val_loss',
                                  verbose=1, save_best_only=True,
                                  save_weights_only=True, mode='min'))
 result = NN.fit_generator(training_generator=training_generator,
-                          samples_per_epoch=10**5, epochs=80, verbose=1,
+                          samples_per_epoch=3 * 10**5, epochs=80, verbose=1,
                           callbacks=callbacks, validation_generator=validation_generator,
-                          nb_val_samples=10**3)
+                          nb_val_samples=10**4)
 lowest_val_loss = min(result.history['val_loss'])
 print(lowest_val_loss)
 

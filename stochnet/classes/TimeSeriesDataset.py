@@ -96,9 +96,9 @@ class TimeSeriesDataset:
                 self.data = self.scaler.fit_transform(flat_data)
                 self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
             elif self.data_format == 'hdf5':
-                slice_size = 10**6
+                slice_size = 10**5
                 nb_iteration = self.nb_trajectories // slice_size
-                for i in range(nb_iteration):
+                for i in tqdm(range(nb_iteration)):
                     data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
                     flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
                     self.scaler.partial_fit(X=flat_data_slice)
@@ -106,7 +106,7 @@ class TimeSeriesDataset:
                     data_slice = self.data[nb_iteration * slice_size:, ...]
                     flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
                     self.scaler.partial_fit(X=flat_data_slice)
-                for i in range(nb_iteration):
+                for i in tqdm(range(nb_iteration)):
                     data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
                     flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
                     flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)

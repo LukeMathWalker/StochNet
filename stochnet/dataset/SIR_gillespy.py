@@ -47,12 +47,12 @@ if __name__ == '__main__':
     species_initial_value = [100, 50, 80]
     test = SIR()
 
-    nb_settings = 2
-    settings = [[10, 20, 30], [20, 30, 40]]
+    nb_settings = 3
+    settings = [[10, 20, 30], [20, 30, 40], [30, 40, 50]]
     num_trajectories = 1000
     for j in tqdm(range(nb_settings)):
         species_initial_value = settings[j]
         test.set_species_initial_value(species_initial_value)
         simple_trajectories = test.run(number_of_trajectories=num_trajectories)
-        print(np.array(simple_trajectories).shape)
-        print(simple_trajectories[0])
+        # print(np.array(simple_trajectories).shape)
+        # print(simple_trajectories[0])

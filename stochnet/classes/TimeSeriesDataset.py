@@ -19,6 +19,7 @@ class TimeSeriesDataset:
         self.read_data(dataset_address, data_format)
         self.memorize_dataset_shape()
         self.rescaled = False
+        self.scaler_is_fitted = False
         self.with_timestamps = with_timestamps
         self.set_labels(labels)
 
@@ -29,6 +30,7 @@ class TimeSeriesDataset:
             with open(dataset_address, 'rb') as data_file:
                 self.data = np.asarray(np.load(data_file), dtype=K.floatx())
         elif self.data_format == 'hdf5':
+            self.path_raw_data = str(dataset_address)
             self.f_raw_data = h5py.File(str(dataset_address), 'a')
             self.data = self.f_raw_data['data']
         else:
@@ -61,6 +63,15 @@ class TimeSeriesDataset:
             self.labels.inv.pop(0)
             self.labels['timestamps'] = 0
 
+    def set_scaler(self, scaler):
+        if self.rescaled is True:
+            raise NotImplementedError("You need to undo the first rescale first!")
+            # TODO: implement an inverse scaling method
+        else:
+            # TODO: add checks on scaler shape, fit, etc..
+            self.scaler = scaler
+            self.scaler_is_fitted = True
+
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
                               must_be_rescaled=True, positivity=None, percentage_of_test_data=0.25,
                               filepath_for_saving_no_split=None, filepath_for_saving_w_split=None):
@@ -85,38 +96,58 @@ class TimeSeriesDataset:
 
     def rescale(self, positivity=None):
         if self.rescaled is False:
-            if positivity == 'needed':
-                positive_eps = 2**(-25)
-                self.scaler = MinMaxScaler(feature_range=(positive_eps, 1))
-            else:
-                self.scaler = StandardScaler()
+            if not hasattr(self, 'scaler'):
+                self.create_scaler(positivity)
             if self.data_format == 'numpy':
-                # StandardScaler expects data of the form [n_samples, n_features]
-                flat_data = self.data.reshape(-1, self.nb_features)
-                self.data = self.scaler.fit_transform(flat_data)
-                self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
+                self.rescale_numpy()
             elif self.data_format == 'hdf5':
-                slice_size = 10**5
-                nb_iteration = self.nb_trajectories // slice_size
-                for i in tqdm(range(nb_iteration)):
-                    data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
-                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
-                    self.scaler.partial_fit(X=flat_data_slice)
-                if nb_iteration * slice_size != self.nb_trajectories:
-                    data_slice = self.data[nb_iteration * slice_size:, ...]
-                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
-                    self.scaler.partial_fit(X=flat_data_slice)
-                for i in tqdm(range(nb_iteration)):
-                    data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
-                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
-                    flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
-                    self.data[i * slice_size: (i + 1) * slice_size, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
-                if nb_iteration * slice_size != self.nb_trajectories:
-                    data_slice = self.data[nb_iteration * slice_size:, ...]
-                    flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
-                    flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
-                    self.data[nb_iteration * slice_size:, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
+                self.rescale_hdf5()
             self.rescaled = True
+
+    def create_scaler(self, positivity=None):
+        if positivity == 'needed':
+            positive_eps = 2**(-25)
+            self.scaler = MinMaxScaler(feature_range=(positive_eps, 1))
+        else:
+            self.scaler = StandardScaler()
+
+    def rescale_numpy(self):
+        flat_data = self.data.reshape(-1, self.nb_features)
+        if self.scaler_is_fitted is True:
+            self.data = self.scaler.transform(flat_data)
+        else:
+            self.data = self.scaler.fit_transform(flat_data)
+        self.data = self.data.reshape(self.nb_trajectories, self.nb_timesteps, self.nb_features)
+        return
+
+    def rescale_hdf5(self):
+        slice_size = 10**5
+        nb_iteration = self.nb_trajectories // slice_size
+        if self.scaler_is_fitted is False:
+            self.fit_scaler_hdf5(nb_iteration, slice_size)
+        self.apply_scaler_hdf5(nb_iteration, slice_size)
+
+    def fit_scaler_hdf5(self, nb_iteration, slice_size):
+        for i in tqdm(range(nb_iteration)):
+            data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
+            flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+            self.scaler.partial_fit(X=flat_data_slice)
+        if nb_iteration * slice_size != self.nb_trajectories:
+            data_slice = self.data[nb_iteration * slice_size:, ...]
+            flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+            self.scaler.partial_fit(X=flat_data_slice)
+
+    def apply_scaler_hdf5(self, nb_iteration, slice_size):
+        for i in tqdm(range(nb_iteration)):
+            data_slice = self.data[i * slice_size: (i + 1) * slice_size, ...]
+            flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+            flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
+            self.data[i * slice_size: (i + 1) * slice_size, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
+        if nb_iteration * slice_size != self.nb_trajectories:
+            data_slice = self.data[nb_iteration * slice_size:, ...]
+            flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
+            flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
+            self.data[nb_iteration * slice_size:, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
 
     def explode_into_training_pieces(self, nb_past_timesteps, filepath_for_saving=None):
         # TODO: add the possibility of seeing more than 1 timestep in the future
@@ -133,6 +164,7 @@ class TimeSeriesDataset:
             nb_training_pieces_per_chunk = nb_trajectory_per_chunk * nb_training_pieces_from_one_trajectory
             nb_iteration = self.nb_trajectories // nb_trajectory_per_chunk
 
+            self.path_no_split = str(filepath_for_saving)
             self.f_ML_data_no_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
             self.X_data = self.f_ML_data_no_split.create_dataset("X_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_data = self.f_ML_data_no_split.create_dataset("y_data", (self.nb_trajectories * nb_training_pieces_from_one_trajectory, self.nb_features), chunks=True)
@@ -175,13 +207,14 @@ class TimeSeriesDataset:
             nb_test = ceil(percentage_of_test_data * nb_samples)
             nb_train = nb_samples - nb_test
 
+            self.path_w_split = str(filepath_for_saving)
             self.f_ML_data_w_split = h5py.File(str(filepath_for_saving), 'a', libver='latest')
             self.X_train = self.f_ML_data_w_split.create_dataset("X_train", (nb_train, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_train = self.f_ML_data_w_split.create_dataset("y_train", (nb_train, self.nb_features), chunks=True)
             self.X_test = self.f_ML_data_w_split.create_dataset("X_test", (nb_test, nb_past_timesteps, self.nb_features), chunks=True)
             self.y_test = self.f_ML_data_w_split.create_dataset("y_test", (nb_test, self.nb_features), chunks=True)
 
-            chunk_size = 10**7
+            chunk_size = 10**6
             nb_iteration = nb_samples // chunk_size
             nb_test_per_chunk = ceil(percentage_of_test_data * chunk_size)
             nb_train_per_chunk = chunk_size - nb_test_per_chunk

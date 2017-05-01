@@ -143,6 +143,7 @@ class TimeSeriesDataset:
             flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
             flat_data_slice_transformed = self.scaler.transform(X=flat_data_slice)
             self.data[i * slice_size: (i + 1) * slice_size, ...] = flat_data_slice_transformed.reshape(-1, self.nb_timesteps, self.nb_features)
+            self.f_raw_data.flush()
         if nb_iteration * slice_size != self.nb_trajectories:
             data_slice = self.data[nb_iteration * slice_size:, ...]
             flat_data_slice = np.asarray(data_slice, dtype=K.floatx()).reshape(-1, self.nb_features)
@@ -158,7 +159,7 @@ class TimeSeriesDataset:
             if filepath_for_saving is None:
                 raise ValueError('hdf5 mode needs a valid filepath for saving.')
 
-            chunk_size = 10**7
+            chunk_size = 10**6
             nb_training_pieces_from_one_trajectory = self.nb_timesteps - nb_past_timesteps
             nb_trajectory_per_chunk = max(chunk_size // nb_training_pieces_from_one_trajectory, 1)
             nb_training_pieces_per_chunk = nb_trajectory_per_chunk * nb_training_pieces_from_one_trajectory
@@ -172,6 +173,7 @@ class TimeSeriesDataset:
                 X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(i * nb_trajectory_per_chunk, (i + 1) * nb_trajectory_per_chunk, nb_past_timesteps)
                 self.X_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = X_data_chunk
                 self.y_data[i * nb_training_pieces_per_chunk: (i + 1) * nb_training_pieces_per_chunk, ...] = y_data_chunk
+                self.f_ML_data_no_split.flush()
             if nb_trajectory_per_chunk * nb_iteration != self.nb_trajectories:
                 X_data_chunk, y_data_chunk = self.explode_into_training_pieces_a_batch_of_traj(nb_iteration * nb_trajectory_per_chunk, self.nb_trajectories, nb_past_timesteps)
                 self.X_data[nb_iteration * nb_training_pieces_per_chunk:, ...] = X_data_chunk
@@ -222,6 +224,7 @@ class TimeSeriesDataset:
                 X_data_slice = np.asarray(self.X_data[i * chunk_size: (i + 1) * chunk_size, ...], dtype=K.floatx())
                 y_data_slice = np.asarray(self.y_data[i * chunk_size: (i + 1) * chunk_size, ...], dtype=K.floatx())
                 self.X_train[i * nb_train_per_chunk: (i + 1) * nb_train_per_chunk, ...], self.X_test[i * nb_test_per_chunk: (i + 1) * nb_test_per_chunk, ...], self.y_train[i * nb_train_per_chunk: (i + 1) * nb_train_per_chunk, ...], self.y_test[i * nb_test_per_chunk: (i + 1) * nb_test_per_chunk, ...] = train_test_split(X_data_slice, y_data_slice, test_size=percentage_of_test_data)
+                self.f_ML_data_w_split.flush()
             if nb_iteration * chunk_size != nb_samples:
                 X_data_slice = np.asarray(self.X_data[nb_iteration * chunk_size:, ...], dtype=K.floatx())
                 y_data_slice = np.asarray(self.y_data[nb_iteration * chunk_size:, ...], dtype=K.floatx())

@@ -126,16 +126,16 @@ validation_generator = HDF5Iterator(validation_filepath, batch_size=batch_size,
 
 input_tensor = Input(shape=(nb_past_timesteps, nb_features))
 flatten1 = Flatten()(input_tensor)
-dense1 = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(flatten1)
+dense1 = Dense(1700, kernel_constraint=maxnorm(3), activation='relu')(flatten1)
 dropout1 = Dropout(0.3)(dense1)
-dense2 = Dense(1024, kernel_constraint=maxnorm(3), activation='relu')(dropout1)
-dropout2 = Dropout(0.7)(dense2)
-NN_body = Dense(2048, kernel_constraint=maxnorm(3), activation='relu')(dropout2)
+dense2 = Dense(1000, kernel_constraint=maxnorm(3), activation='relu')(dropout1)
+dropout2 = Dropout(0.4)(dense2)
+NN_body = Dense(1600, kernel_constraint=maxnorm(3), activation='relu')(dropout2)
 
 number_of_components = 2
 components = []
-components.append(MultivariateLogNormalOutputLayer(nb_features))
-components.append(MultivariateLogNormalOutputLayer(nb_features))
+components.append(MultivariateNormalDiagOutputLayer(nb_features))
+components.append(MultivariateNormalDiagOutputLayer(nb_features))
 
 TopModel_obj = MixtureOutputLayer(components)
 
@@ -144,7 +144,7 @@ TopModel_obj = MixtureOutputLayer(components)
 NN = StochNeuralNetwork(input_tensor, NN_body, TopModel_obj)
 NN.memorize_scaler(scaler)
 
-model_directory = os.path.join(basename, 'models/SIR_timestep_2-1/model_02')
+model_directory = os.path.join(basename, 'models/SIR_timestep_2-1/model_03')
 ensure_dir(model_directory)
 
 callbacks = []

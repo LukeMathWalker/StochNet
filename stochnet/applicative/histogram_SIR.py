@@ -102,10 +102,10 @@ time_step_size = 5. / 11.
 initial_sequences = generate_simulation_settings_array(nb_of_settings=nb_of_initial_configurations)
 initial_sequences = initial_sequences.reshape(nb_of_initial_configurations, 1, nb_features)
 
-stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/SIR_timestep_2-1/model_01/SIR_-7.68718804264.h5'
+stoch_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/SIR_timestep_2-1/model_02/SIR_-21.6554496214.h5'
 NN = StochNeuralNetwork.load(stoch_filepath)
 
-model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/SIR_timestep_2-1/model_01/model.h5'
+model_filepath = '/home/lucap/Documenti/Tesi Magistrale/StochNet/stochnet/models/SIR_timestep_2-1/model_02/model.h5'
 
 get_custom_objects().update({"exp": lambda x: tf.exp(x),
                              "loss_function": NN.TopLayer_obj.loss_function})

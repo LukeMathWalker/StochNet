@@ -7,7 +7,9 @@ final_dataset_address = '/home/lucap/Documenti/Data storage/SIR/timestep_2-1_dat
 dummy_data = np.ones((1, 11, 3))
 
 f = h5py.File(final_dataset_address, 'a', libver='latest')
-f.create_dataset('data', data=dummy_data, maxshape=(None, 11, 3))
+f.create_dataset('data',
+                 data=dummy_data,
+                 maxshape=(None, 11, 3), chunks=True)
 
 for i in range(1, 5):
     dataset_address = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_0' + str(i) + '_no_timestamp.hdf5'

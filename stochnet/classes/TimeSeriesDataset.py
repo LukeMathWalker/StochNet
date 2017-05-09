@@ -34,8 +34,8 @@ class TimeSeriesDataset:
             self.f_raw_data = h5py.File(str(dataset_address), 'a')
             self.data = self.f_raw_data['data']
         else:
-            raise TypeError('''Unsupported data format. .npy and .hdf5 are\n
-                                the available data formats.''')
+            raise TypeError('''Unsupported data format.\n .npy and .hdf5 are
+                               the available data formats.''')
 
     def memorize_dataset_shape(self):
         try:
@@ -73,8 +73,9 @@ class TimeSeriesDataset:
             self.scaler_is_fitted = True
 
     def format_dataset_for_ML(self, keep_timestamps=False, nb_past_timesteps=1,
-                              must_be_rescaled=True, positivity=None, percentage_of_test_data=0.25,
-                              filepath_for_saving_no_split=None, filepath_for_saving_w_split=None):
+                              must_be_rescaled=True, positivity=None, train_test_split=True,
+                              percentage_of_test_data=0.25, filepath_for_saving_no_split=None,
+                              filepath_for_saving_w_split=None):
         if keep_timestamps is False:
             self.remove_timestamps()
 
@@ -82,7 +83,9 @@ class TimeSeriesDataset:
             self.rescale(positivity)
 
         self.explode_into_training_pieces(nb_past_timesteps, filepath_for_saving=filepath_for_saving_no_split)
-        self.train_test_split(percentage_of_test_data=percentage_of_test_data, filepath_for_saving=filepath_for_saving_w_split)
+        if train_test_split is True:
+            self.train_test_split(percentage_of_test_data=percentage_of_test_data,
+                                  filepath_for_saving=filepath_for_saving_w_split)
 
     def remove_timestamps(self):
         # data[:,:,0] contains the timestamps if with_timestamps is True

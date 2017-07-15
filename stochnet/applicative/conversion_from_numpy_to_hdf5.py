@@ -1,9 +1,9 @@
 import numpy as np
-from stochnet.classes.TimeSeriesDataset import TimeSeriesDataset
+from stochnet.classes.TimeSeriesDataset import NumpyTimeSeriesDataset
 from stochnet.utils.hdf5 import convert_from_numpy_to_hdf5, convert_ML_dataset_from_numpy_to_hdf5
 
 np_data_filepath = '/home/lucap/Documenti/Data storage/SIR/SIR_dataset_timestep_2-1_05.npy'
-np_dataset = TimeSeriesDataset(np_data_filepath)
+np_dataset = NumpyTimeSeriesDataset(np_data_filepath)
 np_dataset.remove_timestamps()
 np_data = np_dataset.data
 

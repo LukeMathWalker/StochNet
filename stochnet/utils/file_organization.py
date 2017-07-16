@@ -21,7 +21,7 @@ class ProjectFileExplorer():
         return DatasetFileExplorer(self.data_root_folder, timestep, dataset_id)
 
     def get_ModelFileExplorer(self, timestep, model_id):
-        return DatasetFileExplorer(self.models_root_folder, timestep, model_id)
+        return ModelFileExplorer(self.models_root_folder, timestep, model_id)
 
 
 class DatasetFileExplorer():

@@ -52,7 +52,7 @@ class ModelFileExplorer():
         self.models_root_folder = models_root_folder
         self.model_id = model_id
         self.timestep = timestep
-        self.model_folder = os.path.join(self.data_root_folder,
+        self.model_folder = os.path.join(self.model_root_folder,
                                          str(self.timestep) + '/' + str(self.model_id))
         create_dir_if_it_does_not_exist(self.model_folder)
         self.weights_fp = os.path.join(self.model_folder, 'best_weights.h5')

@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import dill
+from stochnet.utils.iterator import NumpyArrayIterator
+from stochnet.utils import change_scaling
 
 
 def create_dir_if_it_does_not_exist(file_path):
@@ -69,6 +71,22 @@ class HistogramFileExplorer():
                                              'histogram/model_' + str(self.model_id))
         create_dir_if_it_does_not_exist(self.histogram_folder)
         self.log_fp = os.path.join(self.histogram_folder, 'log.txt')
+
+
+def get_train_and_validation_generator_w_scaler(train_explorer, val_explorer, batch_size=64):
+    rescaled_x_train, rescaled_y_train, scaler_train = get_rescaled_dataset(train_explorer)
+    rescaled_x_val, rescaled_y_val, scaler_val = get_rescaled_dataset(val_explorer)
+
+    rescaled_x_val = change_scaling(rescaled_x_val, scaler_val, scaler_train)
+    rescaled_y_val = change_scaling(rescaled_y_val, scaler_val, scaler_train)
+
+    training_generator = NumpyArrayIterator(rescaled_x_train, rescaled_y_train,
+                                            batch_size=batch_size,
+                                            shuffle=True)
+    validation_generator = NumpyArrayIterator(rescaled_x_val, rescaled_y_val,
+                                              batch_size=batch_size,
+                                              shuffle=True)
+    return training_generator, validation_generator, scaler_train
 
 
 def get_rescaled_dataset(dataset_explorer):

@@ -28,7 +28,8 @@ def load_NN(model_explorer):
     return NN
 
 
-def compute_histogram_distance(dataset_explorer, NN, sess, model_id):
+def compute_histogram_distance(dataset_explorer, NN, sess, model_id, plot=False,
+                               log_results=False):
     with open(dataset_explorer.histogram_settings_fp, 'rb') as f:
         settings = np.load(f)
 
@@ -45,14 +46,17 @@ def compute_histogram_distance(dataset_explorer, NN, sess, model_id):
         S_NN_hist = get_S_hist_from_NN(settings_rescaled[i], nb_traj, sess)
         S_samples_SSA = SSA_traj[i, :, -1, 1]
         S_SSA_hist = get_histogram(S_samples_SSA, -0.5, 200.5, 201)
-
-        make_and_save_plot(i, S_NN_hist, S_SSA_hist, histogram_explorer.histogram_folder)
         S_histogram_distance[i] = histogram_distance(S_NN_hist, S_SSA_hist, 1)
 
+        if plot is True:
+            make_and_save_plot(i, S_NN_hist, S_SSA_hist,
+                               histogram_explorer.histogram_folder)
+
     S_mean_histogram_distance = np.mean(S_histogram_distance)
-    with open(histogram_explorer.log_fp, 'w') as f:
-        f.write('The mean histogram distance, computed on {0} settings, is:'.format(nb_settings))
-        f.write('{0}'.format(str(S_mean_histogram_distance)))
+    if log_results is True:
+        with open(histogram_explorer.log_fp, 'w') as f:
+            f.write('The mean histogram distance, computed on {0} settings, is:'.format(nb_settings))
+            f.write('{0}'.format(str(S_mean_histogram_distance)))
 
     return S_mean_histogram_distance
 
@@ -95,5 +99,8 @@ if __name__ == '__main__':
     NN = load_NN(model_explorer)
 
     mean_train_hist_dist = compute_histogram_distance(train_explorer, NN, sess,
-                                                      model_id)
-    mean_val_hist_dist = compute_histogram_distance(val_explorer, NN, sess, model_id)
+                                                      model_id, plot=True,
+                                                      log_results=True)
+    mean_val_hist_dist = compute_histogram_distance(val_explorer, NN, sess,
+                                                    model_id, plot=True,
+                                                    log_results=True)

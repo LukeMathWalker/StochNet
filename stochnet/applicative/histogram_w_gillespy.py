@@ -43,7 +43,6 @@ def compute_histogram_distance(dataset_explorer, NN, sess, model_id):
 
     for i in range(nb_settings):
         S_NN_hist = get_S_hist_from_NN(settings_rescaled[i], nb_traj, sess)
-
         S_samples_SSA = SSA_traj[i, :, -1, 1]
         S_SSA_hist = get_histogram(S_samples_SSA, -0.5, 200.5, 201)
 

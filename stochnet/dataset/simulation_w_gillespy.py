@@ -7,11 +7,16 @@ from importlib import import_module
 
 
 def build_simulation_dataset(model, settings, nb_trajectories,
-                             dataset_folder, prefix='partial_'):
+                             dataset_folder, prefix='partial_', how='concat'):
     nb_settings = settings.shape[0]
     perform_simulations(model, settings, nb_settings, nb_trajectories,
                         dataset_folder, prefix=prefix)
-    dataset = concatenate_simulations(nb_settings, dataset_folder, prefix=prefix)
+    if how == 'concat':
+        dataset = concatenate_simulations(nb_settings, dataset_folder, prefix=prefix)
+    elif how == 'stack':
+        dataset = stack_simulations(nb_settings, dataset_folder, prefix=prefix)
+    else:
+        raise ValueError("'how' accepts only two arguments: 'concat' and 'stack'.")
     return dataset
 
 
@@ -40,6 +45,8 @@ def save_simulation_data(dataset, dataset_folder, prefix, id_number):
 
 
 def concatenate_simulations(nb_settings, dataset_folder, prefix='partial_'):
+    # final_dataset has the following shape:
+    # [nb_settings * nb_trajectories, nb_past_timesteps + 1, nb_features]
     for i in tqdm(range(nb_settings)):
         partial_dataset_filename = str(prefix) + str(i) + '.npy'
         partial_dataset_filepath = os.path.join(dataset_folder, partial_dataset_filename)
@@ -53,18 +60,20 @@ def concatenate_simulations(nb_settings, dataset_folder, prefix='partial_'):
     return final_dataset
 
 
-# def stack_simulations(nb_settings, dataset_folder, prefix='histogram_partial_'):
-#     for i in tqdm(range(nb_settings)):
-#         partial_dataset_filename = str(prefix) + str(i) + '.npy'
-#         partial_dataset_filepath = os.path.join(dataset_folder, partial_dataset_filename)
-#         with open(partial_dataset_filepath, 'rb') as f:
-#             partial_dataset = np.load(f)
-#         if i == 0:
-#             final_dataset = partial_dataset[np.newaxis, ...]
-#         else:
-#             final_dataset = np.concatenate((final_dataset, partial_dataset[np.newaxis, ...]), axis=0)
-#         os.remove(partial_dataset_filepath)
-#     return final_dataset
+def stack_simulations(nb_settings, dataset_folder, prefix='partial_'):
+    # final_dataset has the following shape:
+    # [nb_settings, nb_trajectories, nb_past_timesteps + 1, nb_features]
+    for i in tqdm(range(nb_settings)):
+        partial_dataset_filename = str(prefix) + str(i) + '.npy'
+        partial_dataset_filepath = os.path.join(dataset_folder, partial_dataset_filename)
+        with open(partial_dataset_filepath, 'rb') as f:
+            partial_dataset = np.load(f)
+        if i == 0:
+            final_dataset = partial_dataset[np.newaxis, ...]
+        else:
+            final_dataset = np.concatenate((final_dataset, partial_dataset[np.newaxis, ...]), axis=0)
+        os.remove(partial_dataset_filepath)
+    return final_dataset
 
 
 if __name__ == '__main__':
@@ -87,7 +96,7 @@ if __name__ == '__main__':
     # for size parameter
     settings = np.random.randint(low=30, high=200, size=(nb_settings, 3))
     dataset = build_simulation_dataset(CRN, settings, nb_trajectories,
-                                       dataset_explorer.dataset_folder)
+                                       dataset_explorer.dataset_folder, 'concat')
 
     with open(dataset_explorer.dataset_fp, 'wb') as f:
         np.save(f, dataset)

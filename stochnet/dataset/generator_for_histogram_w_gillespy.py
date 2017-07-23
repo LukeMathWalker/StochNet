@@ -43,7 +43,8 @@ if __name__ == '__main__':
 
     histogram_dataset = build_simulation_dataset(CRN, settings, nb_trajectories,
                                                  dataset_explorer.dataset_folder,
-                                                 prefix='histogram_partial_')
+                                                 prefix='histogram_partial_',
+                                                 how='stack')
 
     with open(dataset_explorer.histogram_dataset_fp, 'wb') as f:
         np.save(f, histogram_dataset)

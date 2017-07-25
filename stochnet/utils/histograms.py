@@ -6,10 +6,12 @@ def histogram_distance(h_X, h_Y, interval_length):
     histogram_distance = norm(h_X - h_Y, ord=1) * interval_length
     return histogram_distance
 
+
 def get_valid_and_sorted_samples(samples, x_min, x_max):
     valid_samples = samples[samples < x_max]
     valid_samples = valid_samples[x_min <= valid_samples]
     return np.sort(valid_samples)
+
 
 def get_histogram(samples, x_min, x_max, nb_of_sub_intervals):
     interval_length = (x_max - x_min) / nb_of_sub_intervals

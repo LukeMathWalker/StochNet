@@ -2,7 +2,7 @@ import os
 import numpy as np
 import dill
 from stochnet.utils.iterator import NumpyArrayIterator
-from stochnet.utils import change_scaling
+from stochnet.utils.utils import change_scaling
 
 
 def create_dir_if_it_does_not_exist(file_path):

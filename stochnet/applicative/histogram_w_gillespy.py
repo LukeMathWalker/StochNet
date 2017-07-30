@@ -47,7 +47,7 @@ def compute_histogram_distance(dataset_explorer, NN, S_SSA_hist, nb_traj, sess,
 
     S_histogram_distance = np.zeros(nb_settings)
     for i in range(nb_settings):
-        S_NN_hist = get_S_hist_from_NN(settings_rescaled[i], nb_traj, sess)
+        S_NN_hist = get_S_hist_from_NN(NN, settings_rescaled[i], nb_traj, sess)
         S_histogram_distance[i] = histogram_distance(S_NN_hist, S_SSA_hist[i], 1)
 
         if plot is True:
@@ -85,7 +85,7 @@ def get_SSA_hist(SSA_traj):
     return S_SSA_hist
 
 
-def get_S_hist_from_NN(setting, nb_traj, sess):
+def get_S_hist_from_NN(NN, setting, nb_traj, sess):
     NN_prediction = NN.predict(setting.reshape(1, 1, -1))
     NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_traj, sess)
     NN_samples = scale_back(NN_samples_rescaled, NN.scaler)

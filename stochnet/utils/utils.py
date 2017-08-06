@@ -26,6 +26,7 @@ def scale_back(v, scaler):
     v_rescaled = flat_v_rescaled.reshape(v_shape)
     return v_rescaled
 
+
 def get_train_and_validation_generator_w_scaler(train_explorer, val_explorer, batch_size=64):
     rescaled_x_train, rescaled_y_train, scaler_train = get_rescaled_dataset(train_explorer)
     rescaled_x_val, rescaled_y_val, scaler_val = get_rescaled_dataset(val_explorer)

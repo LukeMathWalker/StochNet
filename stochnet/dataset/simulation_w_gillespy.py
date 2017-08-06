@@ -89,6 +89,7 @@ if __name__ == '__main__':
     dataset_explorer = project_explorer.get_DatasetFileExplorer(timestep, dataset_id)
 
     CRN_module = import_module("stochnet.CRN_models." + model_name)
+    print(dir(CRN_module))
     CRN_class = getattr(CRN_module, model_name)
     CRN = CRN_class(endtime, timestep)
 

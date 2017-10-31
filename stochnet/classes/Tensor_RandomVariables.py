@@ -1,8 +1,8 @@
-from tensorflow.contrib.distributions import MultivariateNormalCholesky as tf_MultivariateNormalCholesky
+from tensorflow.contrib.distributions import MultivariateNormalTriL as tf_MultivariateNormalTriL
 from tensorflow.contrib.distributions import Categorical as tf_Categorical
 from tensorflow.contrib.distributions import MultivariateNormalDiag as tf_MultivariateNormalDiag
 from tensorflow.contrib.distributions import Mixture as tf_Mixture
-from tensorflow.contrib.distributions import bijector, TransformedDistribution
+from tensorflow.contrib.distributions import bijectors, TransformedDistribution
 import tensorflow as tf
 import numpy as np
 
@@ -11,20 +11,21 @@ class Categorical:
 
     def __init__(self, logits, validate_args=False):
         self.distribution_obj = tf_Categorical(logits=logits, validate_args=validate_args)
-        self.number_of_classes = self.distribution_obj.num_classes
+        self.number_of_classes = self.distribution_obj.event_size
 
     def sample(self, sample_shape=()):
         return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
-        return np.array(self.distribution_obj.get_batch_shape()).prod()
+        return np.array(self.distribution_obj.batch_shape).prod()
 
     def get_description(self):
         descriptions = []
         with tf.Session():
             self.number_of_classes = self.number_of_classes.eval()
-            flattened_class_probabilities = tf.reshape(self.distribution_obj.p, [-1, self.number_of_classes]).eval()
+            flattened_class_probabilities = tf.reshape(self.distribution_obj.probs,
+                                                       [-1, self.number_of_classes]).eval()
         description_preamble = "Categorical random variable with {0} classes.\n\n".format(self.number_of_classes)
         for j in range(self.nb_of_indipendent_random_variables):
             description = description_preamble + "\tClass probabilities: \n\t{0}\n\n".format(flattened_class_probabilities[j, :])
@@ -50,14 +51,14 @@ class MultivariateNormalDiag:
 
     @property
     def sample_space_dimension(self):
-        return self.distribution_obj.get_event_shape().as_list()[0]
+        return self.distribution_obj.event_shape.as_list()[0]
 
     def sample(self, sample_shape=()):
         return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
-        return np.array(self.distribution_obj.get_batch_shape()).prod()
+        return np.array(self.distribution_obj.batch_shape).prod()
 
     def get_description(self):
         descriptions = []
@@ -74,29 +75,29 @@ class MultivariateNormalDiag:
 class MultivariateNormalCholesky:
 
     def __init__(self, mu, chol, validate_args=False):
-        self.distribution_obj = tf_MultivariateNormalCholesky(mu, chol, validate_args=validate_args)
+        self.distribution_obj = tf_MultivariateNormalTriL(mu, chol, validate_args=validate_args)
 
     def log_prob(self, value):
         return self.distribution_obj.log_prob(value)
 
     @property
     def mean(self):
-        return self.distribution_obj.mu
+        return self.distribution_obj.loc
 
     @property
     def covariance(self):
-        return self.distribution_obj.sigma
+        return self.distribution_obj.covariance()
 
     @property
     def sample_space_dimension(self):
-        return self.distribution_obj.get_event_shape().as_list()[0]
+        return self.distribution_obj.event_shape.as_list()[0]
 
     def sample(self, sample_shape=()):
         return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
-        return np.array(self.distribution_obj.get_batch_shape()).prod()
+        return np.array(self.distribution_obj.batch_shape).prod()
 
     def get_description(self):
         descriptions = []
@@ -113,12 +114,12 @@ class MultivariateNormalCholesky:
 class MultivariateLogNormal:
 
     def __init__(self, mu, chol, validate_args=False):
-        self.distribution_obj = TransformedDistribution(distribution=tf_MultivariateNormalCholesky(mu, chol),
-                                                bijector=bijector.Inline(
-                                                    forward_fn=tf.exp,
-                                                    inverse_fn=tf.log,
-                                                    inverse_log_det_jacobian_fn=(lambda y: -tf.reduce_sum(tf.log(y), reduction_indices=-1))),
-                                                name="LogNormalTransformedDistribution")
+        self.distribution_obj = TransformedDistribution(distribution=tf_MultivariateNormalTriL(mu, chol),
+                                                        bijector=bijectors.Inline(
+                                                            forward_fn=tf.exp,
+                                                            inverse_fn=tf.log,
+                                                            inverse_log_det_jacobian_fn=(lambda y: -tf.reduce_sum(tf.log(y), reduction_indices=-1))),
+                                                        name="LogNormalTransformedDistribution")
         self.normal_mean = mu
         self.normal_covariance = chol
 
@@ -128,14 +129,14 @@ class MultivariateLogNormal:
 
     @property
     def sample_space_dimension(self):
-        return self.distribution_obj.get_event_shape().as_list()[0]
+        return self.distribution_obj.event_shape.as_list()[0]
 
     def sample(self, sample_shape=()):
         return self.distribution_obj.sample(sample_shape=sample_shape)
 
     @property
     def nb_of_indipendent_random_variables(self):
-        return np.array(self.distribution_obj.get_batch_shape()).prod()
+        return np.array(self.distribution_obj.batch_shape).prod()
 
     def get_description(self):
         descriptions = []
@@ -170,14 +171,14 @@ class MultivariateLogNormal:
 #
 #     @property
 #     def sample_space_dimension(self):
-#         return self.distribution_obj.get_event_shape().as_list()[0]
+#         return self.distribution_obj.event_shape.as_list()[0]
 #
 #     def sample(self):
 #         return self.distribution_obj.sample()
 #
 #     @property
 #     def nb_of_indipendent_random_variables(self):
-#         return np.array(self.distribution_obj.get_batch_shape()).prod()
+#         return np.array(self.distribution_obj.batch_shape).prod()
 #
 #     def get_description(self):
 #         descriptions = []
@@ -209,7 +210,7 @@ class Mixture:
 
     @property
     def nb_of_indipendent_random_variables(self):
-        return np.array(self.distribution_obj.get_batch_shape()).prod()
+        return np.array(self.distribution_obj.batch_shape).prod()
 
     def get_description(self):
         descriptions = []

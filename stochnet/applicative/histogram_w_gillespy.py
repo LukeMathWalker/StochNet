@@ -86,7 +86,10 @@ def get_SSA_hist(SSA_traj):
 
 
 def get_S_hist_from_NN(NN, setting, nb_traj, sess):
-    NN_prediction = NN.predict(setting.reshape(1, 1, -1))
+    temp = setting.reshape(1, 1, -1)
+    print(temp.shape)
+    NN.model.summary()
+    NN_prediction = NN.predict(temp, batch_size=1)
     NN_samples_rescaled = sample_from_distribution(NN, NN_prediction, nb_traj, sess)
     NN_samples = scale_back(NN_samples_rescaled, NN.scaler)
     S_samples_NN = NN_samples[:, 0, 0]

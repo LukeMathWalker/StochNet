@@ -35,7 +35,7 @@ class HistogramDistance(luigi.contrib.external_program.ExternalPythonProgramTask
         return ['python', program_address, self.timestep,
                 self.nb_past_timesteps, self.training_dataset_id,
                 self.validation_dataset_id, self.model_id,
-                self.project_folder]
+                self.project_folder, self.CRN_name]
 
     def output(self):
         project_explorer = ProjectFileExplorer(self.project_folder)

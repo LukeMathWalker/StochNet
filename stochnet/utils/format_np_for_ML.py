@@ -18,6 +18,7 @@ if __name__ == '__main__':
     timeseries = NumpyTimeSeriesDataset(dataset_explorer.dataset_fp,
                                         with_timestamps=True,
                                         labels=None)
+
     timeseries.format_dataset_for_ML(keep_timestamps=False,
                                      nb_past_timesteps=nb_past_timesteps,
                                      must_be_rescaled=False,

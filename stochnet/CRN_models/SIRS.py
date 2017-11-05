@@ -47,3 +47,12 @@ class SIRS(gillespy.Model):
         self.listOfSpecies['I'].initial_value = species_initial_value[1]
         self.listOfSpecies['R'].initial_value = species_initial_value[2]
         return
+
+    def get_n_species(self):
+        species = self.get_all_species()
+        return len(species)
+
+    def get_initial_settings(self, n_settings):
+        n_species = self.get_n_species()
+        settings = np.random.randint(low=30, high=200, size=(n_settings, n_species))
+        return settings

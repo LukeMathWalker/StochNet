@@ -89,13 +89,10 @@ if __name__ == '__main__':
     dataset_explorer = project_explorer.get_DatasetFileExplorer(timestep, dataset_id)
 
     CRN_module = import_module("stochnet.CRN_models." + model_name)
-    # print(dir(CRN_module))
     CRN_class = getattr(CRN_module, model_name)
     CRN = CRN_class(endtime, timestep)
 
-    # TODO: Implement model_module in a way which allows to infer the correct dim
-    # for size parameter
-    settings = np.random.randint(low=30, high=200, size=(nb_settings, 3))
+    settings = CRN.get_initial_settings(nb_settings)
     dataset = build_simulation_dataset(CRN, settings, nb_trajectories,
                                        dataset_explorer.dataset_folder, 'concat')
 

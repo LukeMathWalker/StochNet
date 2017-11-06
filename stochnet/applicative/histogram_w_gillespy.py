@@ -187,7 +187,7 @@ if __name__ == '__main__':
     val_explorer = project_explorer.get_DatasetFileExplorer(timestep, validation_dataset_id)
     model_explorer = project_explorer.get_ModelFileExplorer(timestep, model_id)
     NN = load_NN(model_explorer)
-    CRN_module = import_module("stochnet.CRN_models." + model_name)
+    CRN_module = import_module("stochnet.CRN_models." + model_name + '_py3')
     CRN_class = getattr(CRN_module, model_name)
 
     mean_train_hist_dist = evaluate_model_on_dataset(train_explorer, nb_past_timesteps,

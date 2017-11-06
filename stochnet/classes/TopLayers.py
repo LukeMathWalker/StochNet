@@ -151,7 +151,9 @@ class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
         super().check_NN_prediction_shape(NN_prediction)
 
     def loss_function(self, y_true, y_pred):
-        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
 
     def log_likelihood(self, y_true, y_pred):
         return self.get_tensor_random_variable(y_pred).log_prob(y_true)
@@ -223,7 +225,9 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
         return tf.diag(diag)
 
     def loss_function(self, y_true, y_pred):
-        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
 
     def log_likelihood(self, y_true, y_pred):
         return self.get_tensor_random_variable(y_pred).log_prob(y_true)
@@ -295,7 +299,9 @@ class MultivariateLogNormalOutputLayer(RandomVariableOutputLayer):
         return tf.diag(diag)
 
     def loss_function(self, y_true, y_pred):
-        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
 
     def log_likelihood(self, y_true, y_pred):
         return self.get_tensor_random_variable(y_pred).log_prob(y_true)
@@ -356,7 +362,9 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
         super().check_NN_prediction_shape(NN_prediction)
 
     def loss_function(self, y_true, y_pred):
-        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
 
     def log_likelihood_function(self, y_true, y_pred):
         return self.get_tensor_random_variable(y_pred).log_prob(y_true)

@@ -12,6 +12,7 @@ class StochNeuralNetwork:
         self.TopLayer_obj = TopLayer_obj
         output_layer = self.TopLayer_obj.add_layer_on_top(self.body)
         self.model = Model(inputs=self.input_tensor, outputs=output_layer)
+        self.model.summary()
         self.model.compile(optimizer=optimizer,
                            loss=self.TopLayer_obj.loss_function)
 

@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class SIR():
 
     @staticmethod
@@ -21,5 +24,5 @@ class SIR():
         return histogram_bounds
 
     @staticmethod
-    def get_species_for_histogram(cls):
+    def get_species_for_histogram():
         return ['S', 'I']

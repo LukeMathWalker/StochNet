@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from keras.utils.generic_utils import get_custom_objects
+from keras import backend as K
+from keras.utils import CustomObjectScope
 
 from stochnet.classes.NeuralNetworks import StochNeuralNetwork
 from stochnet.utils.histograms import histogram_distance, get_histogram
@@ -24,16 +26,18 @@ def sample_from_distribution(NN, NN_prediction, nb_samples, sess=None):
 
 def load_NN(model_explorer):
     NN = StochNeuralNetwork.load(model_explorer.StochNet_fp)
-    get_custom_objects().update({"exp": lambda x: tf.exp(x),
-                                 "loss_function": NN.TopLayer_obj.loss_function})
-    NN.load_model(model_explorer.keras_fp)
+    # get_custom_objects().update({"exp": lambda x: tf.exp(x),
+    #                             "loss_function": NN.TopLayer_obj.loss_function})
+    with CustomObjectScope({"exp": lambda x: tf.exp(x), "loss_function": NN.TopLayer_obj.loss_function}):
+        NN.load_model(model_explorer.keras_fp)
+        NN.load_weights(model_explorer.weights_fp)
     return NN
 
 
 def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
                               model_id, CRN_class, n_bins=200, plot=False,
                               log_results=False):
-    hist_bounds = CRN_class.get_hist_bounds()
+    hist_bounds = CRN_class.get_histogram_bounds()
     hist_species, hist_species_indexes = get_histogram_species_w_indexes(CRN_class)
 
     SSA_traj = get_SSA_traj(dataset_explorer)
@@ -118,7 +122,7 @@ def get_SSA_hists(SSA_traj, histogram_bounds, histogram_species_indexes, n_bins)
     SSA_hists = []
     for i in range(nb_settings):
         SSA_hist_samples = SSA_traj[i, :, -1, histogram_species_indexes]
-        SSA_hist = get_histogram(SSA_hist_samples, histogram_bounds, n_bins)
+        SSA_hist = get_histogram(SSA_hist_samples.T, histogram_bounds, n_bins)
         SSA_hists.append(SSA_hist)
     return SSA_hists
 
@@ -143,12 +147,14 @@ def get_NN_hists(NN, dataset_explorer, nb_traj, nb_past_timesteps, sess,
 def get_NN_hist(NN, rescaled_setting, compute_histogram, histogram_species_indexes,
                 nb_past_timesteps, nb_traj, sess):
     setting = rescaled_setting.reshape(1, nb_past_timesteps, -1)
-    NN_prediction = NN.predict(setting, batch_size=1)
+    print(setting.shape)
+    NN.model.summary()
+    NN_prediction = NN.predict_on_batch(setting)
     rescaled_NN_samples = sample_from_distribution(NN, NN_prediction,
                                                    nb_traj, sess)
     NN_samples = scale_back(rescaled_NN_samples, NN.scaler)
     NN_samples = NN_samples[:, 0, histogram_species_indexes]
-    NN_hist = compute_histogram(NN_samples)
+    NN_hist = compute_histogram(NN_samples.T)
     return NN_hist
 
 
@@ -172,7 +178,13 @@ def make_and_save_plot(figure_index, species_name, NN_hist, SSA_hist, folder):
 
 if __name__ == '__main__':
     np.set_printoptions(suppress=True)
-    sess = tf.Session()
+
+    print(locals())
+
+    config = tf.ConfigProto()
+    # config.gpu_options.per_process_gpu_memory_fraction = 0.3
+    sess = tf.Session(config=config)
+    K.set_session(sess)
 
     timestep = float(sys.argv[1])
     nb_past_timesteps = int(sys.argv[2])
@@ -191,8 +203,8 @@ if __name__ == '__main__':
     CRN_class = getattr(CRN_module, model_name)
 
     mean_train_hist_dist = evaluate_model_on_dataset(train_explorer, nb_past_timesteps,
-                                                     NN, sess, model_id,
+                                                     NN, sess, model_id, CRN_class,
                                                      plot=True, log_results=True)
     mean_val_hist_dist = evaluate_model_on_dataset(val_explorer, nb_past_timesteps,
-                                                   NN, sess, model_id,
+                                                   NN, sess, model_id, CRN_class,
                                                    plot=True, log_results=True)

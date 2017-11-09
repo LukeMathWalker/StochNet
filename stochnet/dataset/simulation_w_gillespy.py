@@ -92,7 +92,7 @@ if __name__ == '__main__':
     CRN_class = getattr(CRN_module, model_name)
     CRN = CRN_class(endtime, timestep)
 
-    settings = CRN.get_initial_settings(nb_settings)
+    settings = CRN_class.get_initial_settings(nb_settings)
     dataset = build_simulation_dataset(CRN, settings, nb_trajectories,
                                        dataset_explorer.dataset_folder, 'concat')
 

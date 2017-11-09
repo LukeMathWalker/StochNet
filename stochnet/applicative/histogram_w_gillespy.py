@@ -56,8 +56,11 @@ def get_histogram_species_w_indexes(CRN_class):
 
 
 def get_SSA_traj(dataset_explorer):
+    # SSA_traj = [nb_settings, nb_traj, nb_past_timesteps+1, nb_species+1]
     with open(dataset_explorer.histogram_dataset_fp, 'rb') as f:
         SSA_traj = np.load(f)
+    # Remove timestamps
+    SSA_traj = SSA_traj[..., 1:]
     return SSA_traj
 
 
@@ -65,7 +68,7 @@ def get_SSA_hists_samples(SSA_traj, histogram_species_indexes):
     nb_settings = SSA_traj.shape[0]
     SSA_hists_samples = []
     for i in range(nb_settings):
-        SSA_hist_samples = SSA_traj[i, :, -1, histogram_species_indexes]
+        SSA_hist_samples = SSA_traj[i, :, -1, histogram_species_indexes].T
         SSA_hists_samples.append(SSA_hist_samples)
     return SSA_hists_samples
 
@@ -117,16 +120,14 @@ def compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_sample
         SSA_hist_samples, NN_hist_samples = _
         hist_distance = []
         for species_index in range(len(hist_species)):
-            print(hist_bounds)
             hist_bound = hist_bounds[species_index]
-            print(hist_bound)
             bin_length = bin_lengths[species_index]
 
             SSA_1S_samples = SSA_hist_samples[:, species_index]
-            SSA_1S_hist = get_histogram(SSA_1S_samples, hist_bound, n_bins)
+            SSA_1S_hist = get_histogram(SSA_1S_samples, hist_bound, n_bins, 1)
 
             NN_1S_samples = NN_hist_samples[:, species_index]
-            NN_1S_hist = get_histogram(NN_1S_samples, hist_bound, n_bins)
+            NN_1S_hist = get_histogram(NN_1S_samples, hist_bound, n_bins, 1)
 
             hist_distance_1S = histogram_distance(NN_1S_hist,
                                                   SSA_1S_hist,
@@ -138,8 +139,8 @@ def compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_sample
                                    NN_1S_hist, SSA_1S_hist,
                                    hist_explorer.histogram_folder)
 
-        SSA_md_hist = get_histogram(SSA_hist_samples, hist_bounds, n_bins)
-        NN_md_hist = get_histogram(NN_hist_samples, hist_bounds, n_bins)
+        SSA_md_hist = get_histogram(SSA_hist_samples, hist_bounds, n_bins, len(hist_bounds))
+        NN_md_hist = get_histogram(NN_hist_samples, hist_bounds, n_bins, len(hist_bounds))
         md_hist_distance = histogram_distance(NN_md_hist, SSA_md_hist, md_bin_measure)
         hist_distance.append(md_hist_distance)
 

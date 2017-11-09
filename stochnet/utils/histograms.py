@@ -13,8 +13,8 @@ def histogram_distance(h_X, h_Y, interval_length):
 #     return np.sort(valid_samples)
 
 
-def get_histogram(samples, histogram_bounds, n_bins):
-    if len(histogram_bounds[0]) > 1:
+def get_histogram(samples, histogram_bounds, n_bins, n_dims):
+    if n_dims > 1:
         hist, edges = np.histogramdd(samples, bins=n_bins, range=histogram_bounds)
     else:
         hist, edges = np.histogram(samples, bins=n_bins, range=histogram_bounds)

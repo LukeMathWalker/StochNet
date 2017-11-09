@@ -7,6 +7,7 @@ from stochnet.luigi_blocks.config import global_params
 from stochnet.utils.envs import get_python_3_env
 from stochnet.luigi_blocks.models import TrainNN
 from stochnet.luigi_blocks.data import GenerateHistogramData
+from datetime import datetime 
 
 
 @inherits(global_params)
@@ -30,6 +31,7 @@ class HistogramDistance(luigi.contrib.external_program.ExternalPythonProgramTask
                            dataset_id=self.validation_dataset_id)]
 
     def program_args(self):
+        print(datetime.now().time())
         program_module = import_module("stochnet.applicative.histogram_w_gillespy")
         program_address = program_module.__file__
         return ['python', program_address, self.timestep,

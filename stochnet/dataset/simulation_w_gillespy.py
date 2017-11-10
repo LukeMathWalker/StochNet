@@ -4,6 +4,7 @@ import sys
 from tqdm import tqdm
 from stochnet.utils.file_organization import ProjectFileExplorer
 from importlib import import_module
+from time import time
 
 
 def build_simulation_dataset(model, settings, nb_trajectories,
@@ -77,6 +78,7 @@ def stack_simulations(nb_settings, dataset_folder, prefix='partial_'):
 
 
 if __name__ == '__main__':
+    start = time()
     dataset_id = int(sys.argv[1])
     nb_settings = int(sys.argv[2])
     nb_trajectories = int(sys.argv[3])
@@ -98,3 +100,12 @@ if __name__ == '__main__':
 
     with open(dataset_explorer.dataset_fp, 'wb') as f:
         np.save(f, dataset)
+
+    end = time()
+    execution_time = end - start
+    with open(dataset_explorer.log_fp, 'wb') as f:
+        f.write("Simulating {0} {1} trajectories for {2} different settings (with endtime {3}) took {4} seconds".format(nb_trajectories,
+                                                                                                                        model_name,
+                                                                                                                        nb_settings,
+                                                                                                                        endtime,
+                                                                                                                        execution_time))

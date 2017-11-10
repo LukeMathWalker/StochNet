@@ -3,6 +3,7 @@ import numpy as np
 from importlib import import_module
 from stochnet.utils.file_organization import ProjectFileExplorer
 from stochnet.dataset.simulation_w_gillespy import build_simulation_dataset
+from time import time
 
 
 def get_histogram_settings(nb_histogram_settings, x_fp):
@@ -21,6 +22,7 @@ def get_histogram_settings(nb_histogram_settings, x_fp):
 
 
 if __name__ == '__main__':
+    start = time()
 
     timestep = float(sys.argv[1])
     nb_past_timesteps = int(sys.argv[2])
@@ -48,3 +50,10 @@ if __name__ == '__main__':
 
     with open(dataset_explorer.histogram_dataset_fp, 'wb') as f:
         np.save(f, histogram_dataset)
+    end = time()
+    execution_time = end - start
+    with open(dataset_explorer.log_fp, 'wb') as f:
+        f.write("Simulating {0} {1} histogram trajectories for {2} different settings took {3} seconds".format(nb_trajectories,
+                                                                                                               model_name,
+                                                                                                               nb_histogram_settings,
+                                                                                                               execution_time))

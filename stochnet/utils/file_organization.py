@@ -31,6 +31,7 @@ class DatasetFileExplorer():
         self.dataset_folder = os.path.join(self.data_root_folder,
                                            str(self.timestep) + '/' + str(self.dataset_id))
         create_dir_if_it_does_not_exist(self.dataset_folder)
+        self.log_fp = os.path.join(self.dataset_folder, 'log.txt')
         self.dataset_fp = os.path.join(self.dataset_folder, 'dataset.npy')
         self.x_fp = os.path.join(self.dataset_folder, 'x.npy')
         self.y_fp = os.path.join(self.dataset_folder, 'y.npy')
@@ -53,6 +54,7 @@ class ModelFileExplorer():
         self.model_folder = os.path.join(self.models_root_folder,
                                          str(self.timestep) + '/' + str(self.model_id))
         create_dir_if_it_does_not_exist(self.model_folder)
+        self.log_fp = os.path.join(self.model_folder, 'log.txt')
         self.weights_fp = os.path.join(self.model_folder, 'best_weights.h5')
         self.keras_fp = os.path.join(self.model_folder, 'keras_model.h5')
         self.StochNet_fp = os.path.join(self.model_folder, 'StochNet_object.h5')

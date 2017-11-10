@@ -3,10 +3,11 @@ import dill
 import numpy as np
 from stochnet.classes.TimeSeriesDataset import NumpyTimeSeriesDataset
 from stochnet.utils.file_organization import ProjectFileExplorer
+from time import time
 
 
 if __name__ == '__main__':
-
+    start = time()
     nb_past_timesteps = int(sys.argv[1])
     dataset_id = int(sys.argv[2])
     timestep = float(sys.argv[3])
@@ -50,3 +51,7 @@ if __name__ == '__main__':
 
     with open(dataset_explorer.scaler_fp, 'wb') as f:
         dill.dump(rescaled_timeseries.scaler, f)
+    end = time()
+    execution_time = end - start
+    with open(dataset_explorer.log_fp, 'wb') as f:
+        f.write("Formatting the dataset took {0} seconds".format(execution_time))

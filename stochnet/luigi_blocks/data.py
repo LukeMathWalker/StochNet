@@ -27,7 +27,8 @@ class GenerateDataset(luigi.contrib.external_program.ExternalPythonProgramTask):
     def output(self):
         project_explorer = ProjectFileExplorer(self.project_folder)
         dataset_explorer = project_explorer.get_DatasetFileExplorer(self.timestep, self.dataset_id)
-        return luigi.LocalTarget(dataset_explorer.dataset_fp)
+        return [luigi.LocalTarget(dataset_explorer.dataset_fp),
+                luigi.LocalTarget(dataset_explorer.log_fp)]
 
 
 @requires(GenerateDataset)
@@ -48,7 +49,8 @@ class FormatDataset(luigi.contrib.external_program.ExternalPythonProgramTask):
                 luigi.LocalTarget(dataset_explorer.y_fp),
                 luigi.LocalTarget(dataset_explorer.rescaled_x_fp),
                 luigi.LocalTarget(dataset_explorer.rescaled_y_fp),
-                luigi.LocalTarget(dataset_explorer.scaler_fp)]
+                luigi.LocalTarget(dataset_explorer.scaler_fp),
+                luigi.LocalTarget(dataset_explorer.log_fp)]
 
 
 @requires(FormatDataset)
@@ -71,7 +73,8 @@ class GenerateHistogramData(luigi.contrib.external_program.ExternalPythonProgram
         project_explorer = ProjectFileExplorer(self.project_folder)
         dataset_explorer = project_explorer.get_DatasetFileExplorer(self.timestep, self.dataset_id)
         return [luigi.LocalTarget(dataset_explorer.histogram_settings_fp),
-                luigi.LocalTarget(dataset_explorer.histogram_dataset_fp)]
+                luigi.LocalTarget(dataset_explorer.histogram_dataset_fp),
+                luigi.LocalTarget(dataset_explorer.log_fp)]
 
 
 @inherits(global_params)

@@ -5,12 +5,12 @@ from tqdm import tqdm
 from stochnet.utils.file_organization import ProjectFileExplorer
 from importlib import import_module
 from time import time
+import subprocess
 
 
-def build_simulation_dataset(model, settings, nb_trajectories,
+def build_simulation_dataset(model_name, nb_settings, nb_trajectories, timestep, endtime,
                              dataset_folder, prefix='partial_', how='concat'):
-    nb_settings = settings.shape[0]
-    perform_simulations(model, settings, nb_settings, nb_trajectories,
+    perform_simulations(model_name, settings, nb_settings, nb_trajectories, timestep, endtime,
                         dataset_folder, prefix=prefix)
     if how == 'concat':
         dataset = concatenate_simulations(nb_settings, dataset_folder, prefix=prefix)
@@ -21,11 +21,17 @@ def build_simulation_dataset(model, settings, nb_trajectories,
     return dataset
 
 
-def perform_simulations(CRN, settings, nb_settings, nb_trajectories,
+def perform_simulations(model_name, settings, nb_settings, nb_trajectories, timestep, endtime,
                         dataset_folder, prefix='partial_'):
-    for j in tqdm(range(nb_settings)):
-        initial_values = settings[j]
-        single_simulation(CRN, initial_values, nb_trajectories, dataset_folder, prefix, j)
+    # parallel for cycle
+    cmd = "seq 0 {6} | rush \"python single_simulation_w_gillespy.py {0} {1} {2} \'{3}\' \'{4}\' \'{5}\' {{}}\"".format(nb_trajectories,
+                                                                                                                        timestep,
+                                                                                                                        endtime,
+                                                                                                                        dataset_folder,
+                                                                                                                        model_name,
+                                                                                                                        prefix,
+                                                                                                                        nb_settings)
+    subprocess.call(cmd, shell=True)
     return
 
 
@@ -92,20 +98,24 @@ if __name__ == '__main__':
 
     CRN_module = import_module("stochnet.CRN_models." + model_name)
     CRN_class = getattr(CRN_module, model_name)
-    CRN = CRN_class(endtime, timestep)
 
     settings = CRN_class.get_initial_settings(nb_settings)
-    dataset = build_simulation_dataset(CRN, settings, nb_trajectories,
-                                       dataset_explorer.dataset_folder, 'concat')
+    settings_fp = os.path.join(dataset_explorer.dataset_folder, 'settings.npy')
+    np.save(settings_fp, settings)
+
+    nb_settings = settings.shape[0]
+
+    dataset = build_simulation_dataset(model_name, nb_settings, nb_trajectories, timestep, endtime,
+                                       dataset_explorer.dataset_folder, how='concat')
 
     with open(dataset_explorer.dataset_fp, 'wb') as f:
         np.save(f, dataset)
 
     end = time()
     execution_time = end - start
-    with open(dataset_explorer.log_fp, 'wb') as f:
-        f.write("Simulating {0} {1} trajectories for {2} different settings (with endtime {3}) took {4} seconds".format(nb_trajectories,
-                                                                                                                        model_name,
-                                                                                                                        nb_settings,
-                                                                                                                        endtime,
-                                                                                                                        execution_time))
+    with open(dataset_explorer.log_fp, 'a') as f:
+        f.write("Simulating {0} {1} trajectories for {2} different settings (with endtime {3}) took {4} seconds.\n".format(nb_trajectories,
+                                                                                                                           model_name,
+                                                                                                                           nb_settings,
+                                                                                                                           endtime,
+                                                                                                                           execution_time))

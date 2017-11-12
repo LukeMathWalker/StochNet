@@ -52,8 +52,8 @@ if __name__ == '__main__':
         np.save(f, histogram_dataset)
     end = time()
     execution_time = end - start
-    with open(dataset_explorer.log_fp, 'wb') as f:
-        f.write("Simulating {0} {1} histogram trajectories for {2} different settings took {3} seconds".format(nb_trajectories,
-                                                                                                               model_name,
-                                                                                                               nb_histogram_settings,
-                                                                                                               execution_time))
+    with open(dataset_explorer.log_fp, 'a') as f:
+        f.write("Simulating {0} {1} histogram trajectories for {2} different settings took {3} seconds.\n".format(nb_trajectories,
+                                                                                                                  model_name,
+                                                                                                                  nb_histogram_settings,
+                                                                                                                  execution_time))

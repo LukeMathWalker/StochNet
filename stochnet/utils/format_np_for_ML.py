@@ -53,5 +53,5 @@ if __name__ == '__main__':
         dill.dump(rescaled_timeseries.scaler, f)
     end = time()
     execution_time = end - start
-    with open(dataset_explorer.log_fp, 'wb') as f:
-        f.write("Formatting the dataset took {0} seconds".format(execution_time))
+    with open(dataset_explorer.log_fp, 'a') as f:
+        f.write("Formatting the dataset took {0} seconds.\n".format(execution_time))

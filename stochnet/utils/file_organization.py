@@ -24,6 +24,7 @@ class ProjectFileExplorer():
 
 class DatasetFileExplorer():
 
+    # TODO: define another way to initialize DatasetFileExplorer using only dataset_folder
     def __init__(self, data_root_folder, timestep, dataset_id):
         self.data_root_folder = data_root_folder
         self.dataset_id = dataset_id
@@ -41,8 +42,8 @@ class DatasetFileExplorer():
         self.histogram_settings_fp = os.path.join(self.dataset_folder, 'histogram_settings.npy')
         self.histogram_dataset_fp = os.path.join(self.dataset_folder, 'histogram_dataset.npy')
 
-    def get_HistogramFileExplorer(self, model_id):
-        return HistogramFileExplorer(self.dataset_folder, model_id)
+    def get_HistogramFileExplorer(self, model_id, nb_steps):
+        return HistogramFileExplorer(self.dataset_folder, model_id, nb_steps)
 
 
 class ModelFileExplorer():
@@ -62,10 +63,11 @@ class ModelFileExplorer():
 
 class HistogramFileExplorer():
 
-    def __init__(self, dataset_folder, model_id):
+    def __init__(self, dataset_folder, model_id, nb_steps):
         self.dataset_folder = dataset_folder
         self.model_id = model_id
         self.histogram_folder = os.path.join(self.dataset_folder,
-                                             'histogram/model_' + str(self.model_id))
+                                             'histogram/model_' + str(self.model_id) +
+                                             '/{0}'.format(nb_steps))
         create_dir_if_it_does_not_exist(self.histogram_folder)
         self.log_fp = os.path.join(self.histogram_folder, 'log.txt')

@@ -1,7 +1,5 @@
 import sys
 import os
-from functools import partial
-from datetime import datetime
 import tensorflow as tf
 
 from importlib import import_module
@@ -28,24 +26,26 @@ def load_NN(model_explorer):
 
 
 def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
-                              model_id, CRN_class, n_bins=200, plot=False,
+                              model_id, CRN_class, steps, n_bins=200, plot=False,
                               log_results=False):
     hist_bounds = CRN_class.get_histogram_bounds()
     bin_lengths = [(b[1] - b[0]) / n_bins for b in hist_bounds]
     hist_species, hist_species_indexes = get_histogram_species_w_indexes(CRN_class)
 
     SSA_traj = get_SSA_traj(dataset_explorer)
-    SSA_hists_samples = get_SSA_hists_samples(SSA_traj, hist_species_indexes)
-
     nb_traj = SSA_traj.shape[1]
-    NN_hists_samples = get_NN_hists_samples(NN, dataset_explorer, nb_traj,
-                                            nb_past_timesteps, sess,
-                                            hist_species_indexes)
 
-    hist_explorer = dataset_explorer.get_HistogramFileExplorer(model_id)
-    return compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_samples,
-                                      hist_bounds, bin_lengths, n_bins, hist_species,
-                                      plot=plot, log_results=log_results)
+    for nb_steps in steps:
+        SSA_hists_samples = get_SSA_hists_samples(SSA_traj, hist_species_indexes, nb_steps)
+        NN_hists_samples = get_NN_hists_samples(NN, dataset_explorer, nb_traj,
+                                                nb_past_timesteps, sess,
+                                                hist_species_indexes)
+
+        hist_explorer = dataset_explorer.get_HistogramFileExplorer(model_id, nb_steps)
+        compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_samples,
+                                   hist_bounds, bin_lengths, n_bins, hist_species,
+                                   plot=plot, log_results=log_results)
+    return
 
 
 def get_histogram_species_w_indexes(CRN_class):
@@ -64,23 +64,23 @@ def get_SSA_traj(dataset_explorer):
     return SSA_traj
 
 
-def get_SSA_hists_samples(SSA_traj, histogram_species_indexes):
+def get_SSA_hists_samples(SSA_traj, histogram_species_indexes, nb_steps):
     nb_settings = SSA_traj.shape[0]
     SSA_hists_samples = []
     for i in range(nb_settings):
-        SSA_hist_samples = SSA_traj[i, :, -1, histogram_species_indexes].T
+        SSA_hist_samples = SSA_traj[i, :, nb_steps, histogram_species_indexes].T
         SSA_hists_samples.append(SSA_hist_samples)
     return SSA_hists_samples
 
 
 def get_NN_hists_samples(NN, dataset_explorer, nb_traj, nb_past_timesteps, sess,
-                         hist_species_indexes):
+                         hist_species_indexes, nb_steps):
     rescaled_settings = get_hist_settings_rescaled(dataset_explorer, NN.scaler)
     nb_settings = rescaled_settings.shape[0]
     NN_hists_samples = []
     for i in range(nb_settings):
         NN_hist_samples = get_NN_hist_samples(NN, rescaled_settings[i],
-                                              hist_species_indexes,
+                                              hist_species_indexes, nb_steps,
                                               nb_past_timesteps, nb_traj, sess)
         NN_hists_samples.append(NN_hist_samples)
     return NN_hists_samples
@@ -93,12 +93,17 @@ def get_hist_settings_rescaled(dataset_explorer, scaler):
     return settings_rescaled
 
 
-def get_NN_hist_samples(NN, rescaled_setting, hist_species_indexes,
+def get_NN_hist_samples(NN, rescaled_setting, hist_species_indexes, nb_steps,
                         nb_past_timesteps, nb_traj, sess):
     setting = rescaled_setting.reshape(1, nb_past_timesteps, -1)
+    nb_species = setting.shape[-1]
     NN_prediction = NN.predict_on_batch(setting)
     rescaled_NN_samples = sample_from_distribution(NN, NN_prediction,
                                                    nb_traj, sess)
+    for i in range(nb_steps - 1):
+        NN_prediction = NN.predict(rescaled_NN_samples)
+        rescaled_NN_samples = sample_from_distribution(NN, NN_prediction, 1, sess)
+        rescaled_NN_samples = rescaled_NN_samples.reshape(nb_traj, nb_past_timesteps, nb_species)
     NN_samples = scale_back(rescaled_NN_samples, NN.scaler)
     NN_samples = NN_samples[:, 0, hist_species_indexes]
     return NN_samples
@@ -120,24 +125,12 @@ def compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_sample
         SSA_hist_samples, NN_hist_samples = _
         hist_distance = []
         for species_index in range(len(hist_species)):
-            hist_bound = hist_bounds[species_index]
-            bin_length = bin_lengths[species_index]
-
-            SSA_1S_samples = SSA_hist_samples[:, species_index]
-            SSA_1S_hist = get_histogram(SSA_1S_samples, hist_bound, n_bins, 1)
-
-            NN_1S_samples = NN_hist_samples[:, species_index]
-            NN_1S_hist = get_histogram(NN_1S_samples, hist_bound, n_bins, 1)
-
-            hist_distance_1S = histogram_distance(NN_1S_hist,
-                                                  SSA_1S_hist,
-                                                  bin_length)
+            hist_distance_1S = compute_hist_distance_1S(hist_bounds, bin_lengths,
+                                                        SSA_hist_samples, NN_hist_samples,
+                                                        n_bins, species_index,
+                                                        hist_explorer, hist_species,
+                                                        i, plot)
             hist_distance.append(hist_distance_1S)
-
-            if plot is True:
-                make_and_save_plot(i, hist_species[species_index],
-                                   NN_1S_hist, SSA_1S_hist,
-                                   hist_explorer.histogram_folder)
 
         SSA_md_hist = get_histogram(SSA_hist_samples, hist_bounds, n_bins, len(hist_bounds))
         NN_md_hist = get_histogram(NN_hist_samples, hist_bounds, n_bins, len(hist_bounds))
@@ -150,31 +143,31 @@ def compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_sample
     hist_distances = np.array(hist_distances)
     mean_hist_distance = np.mean(hist_distances, axis=0)
     if log_results is True:
-        with open(hist_explorer.log_fp, 'w') as f:
-            f.write('The mean multidimensional histogram distance, computed on {0} settings, is:'.format(nb_settings))
-            f.write('{0}'.format(str(mean_hist_distance[-1])))
-            for i, species_name in enumerate(hist_species):
-                f.write('The mean 1d histogram distance for species {0}, computed on {1} settings, is:'.format(species_name, nb_settings))
-                f.write('{0}'.format(str(mean_hist_distance[i])))
+        log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species)
 
     return mean_hist_distance
 
 
-def compute_one_d_histogram_distance(NN_hist_samples, SSA_hist_samples, bin_lengths,
-                                     hist_species, species_index, setting_index,
-                                     hist_explorer, plot):
-    other_species_indexes = tuple(set(range(len(NN_hist.shape))).difference(set([species_index])))
-    one_d_NN_hist = np.add.reduce(NN_hist, other_species_indexes)
-    one_d_SSA_hist = np.add.reduce(SSA_hist, other_species_indexes)
+def compute_hist_distance_1S(hist_bounds, bin_lengths, SSA_hist_samples,
+                             NN_hist_samples, n_bins, species_index,
+                             hist_explorer, hist_species, i, plot):
+    hist_bound = hist_bounds[species_index]
     bin_length = bin_lengths[species_index]
-    one_d_hist_distance = histogram_distance(one_d_NN_hist,
-                                             one_d_SSA_hist,
-                                             bin_length)
+
+    SSA_1S_samples = SSA_hist_samples[:, species_index]
+    SSA_1S_hist = get_histogram(SSA_1S_samples, hist_bound, n_bins, 1)
+
+    NN_1S_samples = NN_hist_samples[:, species_index]
+    NN_1S_hist = get_histogram(NN_1S_samples, hist_bound, n_bins, 1)
+
+    hist_distance_1S = histogram_distance(NN_1S_hist,
+                                          SSA_1S_hist,
+                                          bin_length)
     if plot is True:
-        make_and_save_plot(setting_index, hist_species[species_index],
-                           one_d_NN_hist, one_d_SSA_hist,
+        make_and_save_plot(i, hist_species[species_index],
+                           NN_1S_hist, SSA_1S_hist,
                            hist_explorer.histogram_folder)
-    return one_d_hist_distance
+    return hist_distance_1S
 
 
 def make_and_save_plot(figure_index, species_name, NN_hist, SSA_hist, folder):
@@ -185,6 +178,16 @@ def make_and_save_plot(figure_index, species_name, NN_hist, SSA_hist, folder):
     plot_filepath = os.path.join(folder, str(figure_index) + '_' + species_name + '.png')
     plt.savefig(plot_filepath, bbox_inches='tight')
     plt.close()
+    return
+
+
+def log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species):
+    with open(hist_explorer.log_fp, 'w') as f:
+        f.write('The mean multidimensional histogram distance, computed on {0} settings, is:'.format(nb_settings))
+        f.write('{0}'.format(str(mean_hist_distance[-1])))
+        for i, species_name in enumerate(hist_species):
+            f.write('The mean 1d histogram distance for species {0}, computed on {1} settings, is:'.format(species_name, nb_settings))
+            f.write('{0}'.format(str(mean_hist_distance[i])))
     return
 
 
@@ -212,9 +215,12 @@ if __name__ == '__main__':
     CRN_module = import_module("stochnet.CRN_models." + model_name + '_py3')
     CRN_class = getattr(CRN_module, model_name)
 
+    steps = [1, 5]
     mean_train_hist_dist = evaluate_model_on_dataset(train_explorer, nb_past_timesteps,
                                                      NN, sess, model_id, CRN_class,
-                                                     plot=True, log_results=True)
+                                                     steps, plot=True,
+                                                     log_results=True)
     mean_val_hist_dist = evaluate_model_on_dataset(val_explorer, nb_past_timesteps,
                                                    NN, sess, model_id, CRN_class,
-                                                   plot=True, log_results=True)
+                                                   steps, plot=True,
+                                                   log_results=True)

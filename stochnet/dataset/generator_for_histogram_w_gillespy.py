@@ -34,16 +34,14 @@ if __name__ == '__main__':
 
     project_explorer = ProjectFileExplorer(project_folder)
     dataset_explorer = project_explorer.get_DatasetFileExplorer(timestep, dataset_id)
-
-    CRN_module = import_module("stochnet.CRN_models." + model_name)
-    CRN_class = getattr(CRN_module, model_name)
-    CRN = CRN_class(endtime=nb_past_timesteps * timestep, timestep=timestep)
+    endtime = (nb_past_timesteps + 10) * timestep
 
     settings = get_histogram_settings(nb_histogram_settings, dataset_explorer.x_fp)
     with open(dataset_explorer.histogram_settings_fp, 'wb') as f:
         np.save(f, settings)
 
-    histogram_dataset = build_simulation_dataset(CRN, settings, nb_trajectories,
+    histogram_dataset = build_simulation_dataset(model_name, settings, nb_trajectories,
+                                                 timestep, endtime,
                                                  dataset_explorer.dataset_folder,
                                                  prefix='histogram_partial_',
                                                  how='stack')

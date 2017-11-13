@@ -24,30 +24,17 @@ def build_simulation_dataset(model_name, nb_settings, nb_trajectories, timestep,
 def perform_simulations(model_name, settings, nb_settings, nb_trajectories, timestep, endtime,
                         dataset_folder, prefix='partial_'):
     # parallel for cycle
-    cmd = "seq 0 {6} | rush \"python single_simulation_w_gillespy.py {0} {1} {2} \'{3}\' \'{4}\' \'{5}\' {{}}\"".format(nb_trajectories,
-                                                                                                                        timestep,
-                                                                                                                        endtime,
-                                                                                                                        dataset_folder,
-                                                                                                                        model_name,
-                                                                                                                        prefix,
-                                                                                                                        nb_settings)
+    program_module = import_module("stochnet.dataset.single_simulation_w_gillespy")
+    program_address = program_module.__file__
+    cmd = "seq 0 {7} | rush \"python {0} {1} {2} {3} \'{4}\' \'{5}\' \'{6}\' {{}}\"".format(program_address,
+                                                                                            nb_trajectories,
+                                                                                            timestep,
+                                                                                            endtime,
+                                                                                            dataset_folder,
+                                                                                            model_name,
+                                                                                            prefix,
+                                                                                            nb_settings)
     subprocess.call(cmd, shell=True)
-    return
-
-
-def single_simulation(CRN, initial_values, nb_trajectories, dataset_folder, prefix, id_number):
-    CRN.set_species_initial_value(initial_values)
-    trajectories = CRN.run(number_of_trajectories=nb_trajectories, show_labels=False)
-    dataset = np.array(trajectories)
-    save_simulation_data(dataset, dataset_folder, prefix, id_number)
-    return
-
-
-def save_simulation_data(dataset, dataset_folder, prefix, id_number):
-    partial_dataset_filename = str(prefix) + str(id_number) + '.npy'
-    partial_dataset_filepath = os.path.join(dataset_folder, partial_dataset_filename)
-    with open(partial_dataset_filepath, 'wb') as f:
-        np.save(f, dataset)
     return
 
 

@@ -137,10 +137,11 @@ class HistogramDistance(luigi.contrib.external_program.ExternalPythonProgramTask
                 self.project_folder, self.CRN_name]
 
     def output(self):
+        # TODO: parametrize histogram folders
         project_explorer = ProjectFileExplorer(self.project_folder)
         train_explorer = project_explorer.get_DatasetFileExplorer(self.timestep, self.training_dataset_id)
-        train_histogram_explorer = train_explorer.get_HistogramFileExplorer(self.model_id)
+        train_histogram_explorer = train_explorer.get_HistogramFileExplorer(self.model_id, 5)
         val_explorer = project_explorer.get_DatasetFileExplorer(self.timestep, self.validation_dataset_id)
-        val_histogram_explorer = val_explorer.get_HistogramFileExplorer(self.model_id)
+        val_histogram_explorer = val_explorer.get_HistogramFileExplorer(self.model_id, 5)
         return [luigi.LocalTarget(train_histogram_explorer.log_fp),
                 luigi.LocalTarget(val_histogram_explorer.log_fp)]

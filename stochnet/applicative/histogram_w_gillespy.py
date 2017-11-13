@@ -39,7 +39,7 @@ def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
         SSA_hists_samples = get_SSA_hists_samples(SSA_traj, hist_species_indexes, nb_steps)
         NN_hists_samples = get_NN_hists_samples(NN, dataset_explorer, nb_traj,
                                                 nb_past_timesteps, sess,
-                                                hist_species_indexes)
+                                                hist_species_indexes, nb_steps)
 
         hist_explorer = dataset_explorer.get_HistogramFileExplorer(model_id, nb_steps)
         compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_samples,
@@ -143,7 +143,7 @@ def compute_histogram_distance(hist_explorer, SSA_hists_samples, NN_hists_sample
     hist_distances = np.array(hist_distances)
     mean_hist_distance = np.mean(hist_distances, axis=0)
     if log_results is True:
-        log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species)
+        _log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species)
 
     return mean_hist_distance
 
@@ -181,7 +181,7 @@ def make_and_save_plot(figure_index, species_name, NN_hist, SSA_hist, folder):
     return
 
 
-def log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species):
+def _log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species):
     with open(hist_explorer.log_fp, 'w') as f:
         f.write('The mean multidimensional histogram distance, computed on {0} settings, is:'.format(nb_settings))
         f.write('{0}'.format(str(mean_hist_distance[-1])))

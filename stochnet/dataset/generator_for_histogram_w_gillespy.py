@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from importlib import import_module
+import os
 from stochnet.utils.file_organization import ProjectFileExplorer
 from stochnet.dataset.simulation_w_gillespy import build_simulation_dataset
 from time import time
@@ -40,7 +40,11 @@ if __name__ == '__main__':
     with open(dataset_explorer.histogram_settings_fp, 'wb') as f:
         np.save(f, settings)
 
-    histogram_dataset = build_simulation_dataset(model_name, settings, nb_trajectories,
+    # TODO: remove this workaround
+    settings_fp = os.path.join(dataset_explorer.dataset_folder, 'settings.npy')
+    np.save(settings_fp, settings)
+
+    histogram_dataset = build_simulation_dataset(model_name, nb_histogram_settings, nb_trajectories,
                                                  timestep, endtime,
                                                  dataset_explorer.dataset_folder,
                                                  prefix='histogram_partial_',

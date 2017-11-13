@@ -10,7 +10,7 @@ import subprocess
 
 def build_simulation_dataset(model_name, nb_settings, nb_trajectories, timestep, endtime,
                              dataset_folder, prefix='partial_', how='concat'):
-    perform_simulations(model_name, settings, nb_settings, nb_trajectories, timestep, endtime,
+    perform_simulations(model_name, nb_settings, nb_trajectories, timestep, endtime,
                         dataset_folder, prefix=prefix)
     if how == 'concat':
         dataset = concatenate_simulations(nb_settings, dataset_folder, prefix=prefix)
@@ -21,7 +21,7 @@ def build_simulation_dataset(model_name, nb_settings, nb_trajectories, timestep,
     return dataset
 
 
-def perform_simulations(model_name, settings, nb_settings, nb_trajectories, timestep, endtime,
+def perform_simulations(model_name, nb_settings, nb_trajectories, timestep, endtime,
                         dataset_folder, prefix='partial_'):
     # parallel for cycle
     program_module = import_module("stochnet.dataset.single_simulation_w_gillespy")

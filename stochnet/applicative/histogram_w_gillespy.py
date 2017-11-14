@@ -1,8 +1,6 @@
 import sys
 import os
 import tensorflow as tf
-import gc
-import objgraph
 
 from importlib import import_module
 import numpy as np
@@ -38,7 +36,6 @@ def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
     nb_settings = SSA_traj.shape[0]
 
     for nb_steps in steps:
-        hist_distances = []
         print('Number of future steps: {0}.'.format(nb_steps))
         for setting_id in range(nb_settings):
             SSA_hist_samples = SSA_traj[setting_id, :, nb_steps, hist_species_indexes].T
@@ -55,9 +52,6 @@ def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
             else:
                 tmp = np.array([mean_hist_distance, hist_distance])
                 mean_hist_distance = np.average(tmp, weights=(setting_id, 1), axis=0)
-            print('')
-            objgraph.show_most_common_types(limit=20)
-            gc.collect()
         if log_results is True:
             _log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species)
     return

@@ -1,22 +1,24 @@
 import gillespy
 import numpy as np
+import math
 
 
 class Gene(gillespy.Model):
-    """
-    This is a simple example for mass-action degradation of species S.
-    """
 
-    def __init__(self, alpha=166, beta=0.1, Psteady=350):
+    def __init__(self, endtime, timestep):
 
         # Initialize the model.
         gillespy.Model.__init__(self, name="Gene")
 
+        self.alpha = 166
+        self.beta = 30
+        self.Psteady = 10000
+
         # Parameters
-        Kp = gillespy.Parameter(name='Kp', expression=35)
+        Kp = gillespy.Parameter(name='Kp', expression=350)
         Kt = gillespy.Parameter(name='Kt', expression=0.001 * beta * Psteady)
         Kd1 = gillespy.Parameter(name='Kd1', expression=0.001)
-        Kd2 = gillespy.Parameter(name='Kd2', expression=beta * 0.001)
+        Kd2 = gillespy.Parameter(name='Kd2', expression=beta * 0.05)
         Kb = gillespy.Parameter(name='Kb', expression=alpha)
         Ku = gillespy.Parameter(name='Ku', expression=1)
         self.add_parameter([Kp, Kt, Kd1, Kd2, Kb, Ku])
@@ -25,7 +27,7 @@ class Gene(gillespy.Model):
         G0 = gillespy.Species(name='G0', initial_value=0)
         G1 = gillespy.Species(name='G1', initial_value=1)
         M = gillespy.Species(name='M', initial_value=1)
-        P = gillespy.Species(name='P', initial_value=350)
+        P = gillespy.Species(name='P', initial_value=500)
         self.add_species([G0, G1, M, P])
 
         # Reactions
@@ -54,7 +56,9 @@ class Gene(gillespy.Model):
                                   products={G1: 1, P: 1},
                                   rate=Ku)
         self.add_reaction([prodM, prodP, degM, degP, reg1G, reg2G])
-        self.timespan(np.linspace(0, 1000000, 1000001))
+
+        nb_of_steps = int(math.ceil((endtime / timestep))) + 1
+        self.timespan(np.linspace(0, endtime, nb_of_steps))
 
     def set_species_initial_value(self, species_initial_value):
         self.listOfSpecies['G0'].initial_value = species_initial_value[0]
@@ -62,11 +66,29 @@ class Gene(gillespy.Model):
         self.listOfSpecies['M'].initial_value = species_initial_value[2]
         self.listOfSpecies['P'].initial_value = species_initial_value[3]
 
-    def get_n_species(self):
-        species = self.get_all_species()
-        return len(species)
+    @staticmethod
+    def get_species():
+        return ['G0', 'G1', 'M', 'P']
 
-    def get_initial_settings(self, n_settings):
-        n_species = self.get_n_species()
-        settings = np.random.randint(low=30, high=200, size=(n_settings, n_species))
+    @classmethod
+    def get_n_species(cls):
+        return len(cls.get_species())
+
+    @classmethod
+    def get_initial_settings(cls, n_settings):
+        G0 = np.random.randint(low=0, high=2, size=(n_settings, 1))
+        G1 = np.ones_like(G0, dtype=float) - G0
+        M = np.random.randint(low=0, high=6, size=(n_settings, 1))
+        P = np.random.randint(low=400, high=800, size=(n_settings, 1))
+        settings = np.concatenate((G0, G1, M, P), axis=1)
         return settings
+
+    @classmethod
+    def get_histogram_bounds(cls):
+        n_species_for_histogram = len(cls.get_species_for_histogram())
+        histogram_bounds = [[0.5, 1800.5]] * n_species_for_histogram
+        return histogram_bounds
+
+    @staticmethod
+    def get_species_for_histogram():
+        return ['P']

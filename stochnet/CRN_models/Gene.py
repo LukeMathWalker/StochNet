@@ -16,10 +16,10 @@ class Gene(gillespy.Model):
 
         # Parameters
         Kp = gillespy.Parameter(name='Kp', expression=350)
-        Kt = gillespy.Parameter(name='Kt', expression=0.001 * beta * Psteady)
+        Kt = gillespy.Parameter(name='Kt', expression=0.001 * self.beta * self.Psteady)
         Kd1 = gillespy.Parameter(name='Kd1', expression=0.001)
-        Kd2 = gillespy.Parameter(name='Kd2', expression=beta * 0.05)
-        Kb = gillespy.Parameter(name='Kb', expression=alpha)
+        Kd2 = gillespy.Parameter(name='Kd2', expression=self.beta * 0.05)
+        Kb = gillespy.Parameter(name='Kb', expression=self.alpha)
         Ku = gillespy.Parameter(name='Ku', expression=1)
         self.add_parameter([Kp, Kt, Kd1, Kd2, Kb, Ku])
 

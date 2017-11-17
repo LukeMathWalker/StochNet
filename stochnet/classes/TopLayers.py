@@ -3,7 +3,7 @@ import numpy as np
 import abc
 from keras.layers import Dense
 from keras.layers.merge import concatenate
-from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, Mixture
+from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, MultivariateLogNormal, Mixture, MultivariateNormalDiag
 from stochnet.classes.Errors import ShapeError, DimensionError
 
 
@@ -28,14 +28,17 @@ class RandomVariableOutputLayer(abc.ABC):
         """
 
     @abc.abstractmethod
-    def sample(self, NN_prediction):
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
         """Get tensor random random variable correspinding to the parameters provided by
         NN_prediction and sample from those.
         The method returns a numpy array with the following shape:
         [number_of_samples, self.sample_space_dimension]"""
         self.check_NN_prediction_shape(NN_prediction)
-        with tf.Session():
-            samples = self.get_tensor_random_variable(NN_prediction).sample().eval()
+        if sess is None:
+            with tf.Session():
+                samples = self.get_tensor_random_variable(NN_prediction).sample(sample_shape=sample_shape).eval()
+        else:
+            samples = sess.run(self.get_tensor_random_variable(NN_prediction).sample(sample_shape=sample_shape))
         return samples
 
     @abc.abstractmethod
@@ -90,8 +93,8 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
         self.check_NN_prediction_shape(NN_prediction)
         return Categorical(NN_prediction)
 
-    def sample(self, NN_prediction):
-        return super().sample(NN_prediction)
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
+        return super().sample(NN_prediction, sample_shape, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)
@@ -106,6 +109,54 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
     def log_likelihood_function(self, y_true, y_pred):
         log_likelihood = -tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred)
         return log_likelihood
+
+
+class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
+
+    def __init__(self, sample_space_dimension, mu_regularizer=None, diag_regularizer=None):
+        self.sample_space_dimension = sample_space_dimension
+        self.mu_regularizer = mu_regularizer
+        self.diag_regularizer = diag_regularizer
+
+    @property
+    def sample_space_dimension(self):
+        return self._sample_space_dimension
+
+    @sample_space_dimension.setter
+    def sample_space_dimension(self, new_sample_space_dimension):
+        if new_sample_space_dimension > 1:
+            self._sample_space_dimension = new_sample_space_dimension
+            self.number_of_output_neurons = 2 * self._sample_space_dimension
+        else:
+            raise ValueError('''The sample space dimension for a multivariate normal variable needs to be at least two!''')
+
+    def add_layer_on_top(self, base_model):
+        mu = Dense(self._sample_space_dimension, activation=None, activity_regularizer=self.mu_regularizer)(base_model)
+        diag = Dense(self._sample_space_dimension, activation=tf.exp, activity_regularizer=self.diag_regularizer)(base_model)
+        return concatenate([mu, diag], axis=-1)
+
+    def get_tensor_random_variable(self, NN_prediction):
+        self.check_NN_prediction_shape(NN_prediction)
+        mu = tf.slice(NN_prediction, [0, 0], [-1, self._sample_space_dimension])
+        diag = tf.slice(NN_prediction, [0, self._sample_space_dimension], [-1, self._sample_space_dimension])
+        return MultivariateNormalDiag(mu, diag)
+
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
+        return super().sample(NN_prediction, sample_shape, sess)
+
+    def get_description(self, NN_prediction):
+        return super().get_description(NN_prediction)
+
+    def check_NN_prediction_shape(self, NN_prediction):
+        super().check_NN_prediction_shape(NN_prediction)
+
+    def loss_function(self, y_true, y_pred):
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
+
+    def log_likelihood(self, y_true, y_pred):
+        return self.get_tensor_random_variable(y_pred).log_prob(y_true)
 
 
 class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
@@ -141,8 +192,8 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
             cholesky = self.batch_to_lower_triangular_matrix(cholesky_diag, cholesky_sub_diag)
         return MultivariateNormalCholesky(mu, cholesky)
 
-    def sample(self, NN_prediction, max_number_of_samples=10):
-        return super().sample(NN_prediction, max_number_of_samples=max_number_of_samples)
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
+        return super().sample(NN_prediction, sample_shape, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)
@@ -174,7 +225,83 @@ class MultivariateNormalCholeskyOutputLayer(RandomVariableOutputLayer):
         return tf.diag(diag)
 
     def loss_function(self, y_true, y_pred):
-        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
+
+    def log_likelihood(self, y_true, y_pred):
+        return self.get_tensor_random_variable(y_pred).log_prob(y_true)
+
+
+class MultivariateLogNormalOutputLayer(RandomVariableOutputLayer):
+    # TODO: eliminate the duplicated code between MultivariteNormalCholesky and MultivariateLogNormal
+    def __init__(self, sample_space_dimension):
+        self.sample_space_dimension = sample_space_dimension
+
+    @property
+    def sample_space_dimension(self):
+        return self._sample_space_dimension
+
+    @sample_space_dimension.setter
+    def sample_space_dimension(self, new_sample_space_dimension):
+        if new_sample_space_dimension > 1:
+            self._sample_space_dimension = new_sample_space_dimension
+            self.number_of_sub_diag_entries = self._sample_space_dimension * (self._sample_space_dimension - 1) // 2
+            self.number_of_output_neurons = 2 * self._sample_space_dimension + self.number_of_sub_diag_entries
+        else:
+            raise ValueError('''The sample space dimension for a multivariate log-normal variable needs to be at least two!''')
+
+    def add_layer_on_top(self, base_model):
+        normal_mean = Dense(self._sample_space_dimension, activation=None)(base_model)
+        normal_chol_diag = Dense(self._sample_space_dimension, activation=tf.exp)(base_model)
+        normal_chol_sub_diag = Dense(self.number_of_sub_diag_entries, activation=None)(base_model)
+        return concatenate([normal_mean, normal_chol_diag, normal_chol_sub_diag], axis=-1)
+
+    def get_tensor_random_variable(self, NN_prediction):
+        self.check_NN_prediction_shape(NN_prediction)
+        normal_mean = tf.slice(NN_prediction, [0, 0], [-1, self._sample_space_dimension])
+        normal_cholesky_diag = tf.slice(NN_prediction, [0, self._sample_space_dimension], [-1, self._sample_space_dimension])
+        normal_cholesky_sub_diag = tf.slice(NN_prediction, [0, 2 * self._sample_space_dimension], [-1, self.number_of_sub_diag_entries])
+        with tf.control_dependencies([tf.assert_positive(normal_cholesky_diag)]):
+            normal_cholesky = self.batch_to_lower_triangular_matrix(normal_cholesky_diag, normal_cholesky_sub_diag)
+        return MultivariateLogNormal(normal_mean, normal_cholesky)
+
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
+        return super().sample(NN_prediction, sample_shape, sess)
+
+    def get_description(self, NN_prediction):
+        return super().get_description(NN_prediction)
+
+    def check_NN_prediction_shape(self, NN_prediction):
+        super().check_NN_prediction_shape(NN_prediction)
+
+    def batch_to_lower_triangular_matrix(self, batch_diag, batch_sub_diag):
+        # batch_diag, batch_sub_diag: [batch_size, *]
+        # sltm = strictly_lower_triangular_matrix
+        # ltm = lower_triangular_matrix
+        batch_sltm = tf.map_fn(self.to_strictly_lower_triangular_matrix, batch_sub_diag)
+        batch_diagonal_matrix = tf.map_fn(self.to_diagonal_matrix, batch_diag)
+        batch_ltm = batch_sltm + batch_diagonal_matrix
+        return batch_ltm
+
+    def to_strictly_lower_triangular_matrix(self, sub_diag):
+        # sltm = strictly_lower_triangular_matrix
+        sltm__indices = list(zip(*np.tril_indices(self._sample_space_dimension, -1)))
+        sltm__indices = tf.constant([list(i) for i in sltm__indices], dtype=tf.int64)
+        sltm = tf.sparse_to_dense(sparse_indices=sltm__indices,
+                                  output_shape=[self._sample_space_dimension, self._sample_space_dimension],
+                                  sparse_values=sub_diag,
+                                  default_value=0,
+                                  validate_indices=True)
+        return sltm
+
+    def to_diagonal_matrix(self, diag):
+        return tf.diag(diag)
+
+    def loss_function(self, y_true, y_pred):
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
 
     def log_likelihood(self, y_true, y_pred):
         return self.get_tensor_random_variable(y_pred).log_prob(y_true)
@@ -225,8 +352,8 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
             start_slicing_index += component.number_of_output_neurons
         return Mixture(categorical_random_variable, components_random_variable)
 
-    def sample(self, NN_prediction):
-        return super().sample(NN_prediction)
+    def sample(self, NN_prediction, sample_shape=(), sess=None):
+        return super().sample(NN_prediction, sample_shape, sess)
 
     def get_description(self, NN_prediction):
         return super().get_description(NN_prediction)
@@ -235,7 +362,9 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
         super().check_NN_prediction_shape(NN_prediction)
 
     def loss_function(self, y_true, y_pred):
-        return -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = -self.get_tensor_random_variable(y_pred).log_prob(y_true)
+        loss = tf.reshape(loss, [-1])
+        return loss
 
     def log_likelihood_function(self, y_true, y_pred):
         return self.get_tensor_random_variable(y_pred).log_prob(y_true)

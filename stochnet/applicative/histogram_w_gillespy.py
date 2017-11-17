@@ -1,6 +1,7 @@
 import sys
 import os
 import tensorflow as tf
+from tqdm import tqdm
 
 from importlib import import_module
 import numpy as np
@@ -37,7 +38,7 @@ def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
 
     for nb_steps in steps:
         print('Number of future steps: {0}.'.format(nb_steps))
-        for setting_id in range(nb_settings):
+        for setting_id in tqdm(range(nb_settings)):
             SSA_hist_samples = SSA_traj[setting_id, :, nb_steps, hist_species_indexes].T
             NN_hist_samples = get_NN_hist_samples(NN, rescaled_settings[setting_id],
                                                   hist_species_indexes, nb_steps,
@@ -116,10 +117,11 @@ def compute_histogram_distance(hist_explorer, SSA_hist_samples, NN_hist_samples,
                                                     setting_id, plot)
         hist_distance.append(hist_distance_1S)
 
-    SSA_md_hist = get_histogram(SSA_hist_samples, hist_bounds, n_bins, len(hist_bounds))
-    NN_md_hist = get_histogram(NN_hist_samples, hist_bounds, n_bins, len(hist_bounds))
-    md_hist_distance = histogram_distance(NN_md_hist, SSA_md_hist, md_bin_measure)
-    hist_distance.append(md_hist_distance)
+    if len(hist_species) > 1:
+        SSA_md_hist = get_histogram(SSA_hist_samples, hist_bounds, n_bins, len(hist_bounds))
+        NN_md_hist = get_histogram(NN_hist_samples, hist_bounds, n_bins, len(hist_bounds))
+        md_hist_distance = histogram_distance(NN_md_hist, SSA_md_hist, md_bin_measure)
+        hist_distance.append(md_hist_distance)
     return hist_distance
 
 
@@ -158,8 +160,9 @@ def make_and_save_plot(figure_index, species_name, NN_hist, SSA_hist, folder):
 
 def _log_results(hist_explorer, nb_settings, mean_hist_distance, hist_species):
     with open(hist_explorer.log_fp, 'w') as f:
-        f.write('The mean multidimensional histogram distance, computed on {0} settings, is: {1}.\n'.format(nb_settings,
-                                                                                                            str(mean_hist_distance[-1])))
+        if len(hist_species) > 1:
+            f.write('The mean multidimensional histogram distance, computed on {0} settings, is: {1}.\n'.format(nb_settings,
+                                                                                                                str(mean_hist_distance[-1])))
         for i, species_name in enumerate(hist_species):
             f.write('The mean 1d histogram distance for species {0}, computed on {1} settings, is: {2}.\n'.format(species_name,
                                                                                                                   nb_settings,

@@ -132,10 +132,10 @@ def compute_hist_distance_1S(hist_bounds, bin_lengths, SSA_hist_samples,
     bin_length = bin_lengths[species_index]
 
     SSA_1S_samples = SSA_hist_samples[:, species_index]
-    SSA_1S_hist = get_histogram(SSA_1S_samples, hist_bound, n_bins, 1)
+    SSA_1S_hist = get_histogram(SSA_1S_samples, hist_bound, n_bins, 1, bin_length)
 
     NN_1S_samples = NN_hist_samples[:, species_index]
-    NN_1S_hist = get_histogram(NN_1S_samples, hist_bound, n_bins, 1)
+    NN_1S_hist = get_histogram(NN_1S_samples, hist_bound, n_bins, 1, bin_length)
 
     hist_distance_1S = histogram_distance(NN_1S_hist,
                                           SSA_1S_hist,

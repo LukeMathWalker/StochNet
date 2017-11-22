@@ -79,7 +79,8 @@ setup(
                       'tensorflow-gpu==1.3.0;python_version>"3."',
                       'tqdm;python_version>"3."',
                       'bidict;python_version>"3."',
-                      'gillespy;python_version<"3."'],
+                      'gillespy;python_version<"3."',
+                      'tqdm'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

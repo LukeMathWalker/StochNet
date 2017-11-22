@@ -80,7 +80,8 @@ setup(
                       'tqdm;python_version>"3."',
                       'bidict;python_version>"3."',
                       'gillespy;python_version<"3."',
-                      'tqdm'],
+                      'tqdm',
+                      'dill'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

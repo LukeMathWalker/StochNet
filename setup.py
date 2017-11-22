@@ -80,6 +80,7 @@ setup(
                       'tqdm;python_version>"3."',
                       'bidict;python_version>"3."',
                       'gillespy;python_version<"3."',
+                      'pandas==0.20.3;python_version>"3."',
                       'tqdm',
                       'dill'],
 

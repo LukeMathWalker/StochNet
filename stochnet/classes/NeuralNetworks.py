@@ -6,12 +6,12 @@ import sys
 
 class StochNeuralNetwork:
 
-    def __init__(self, input_tensor, NN_body, TopLayer_obj, l2_penalty=0,
+    def __init__(self, input_tensor, NN_body, TopLayer_obj,
                  mode='min', optimizer='adam'):
         self.input_tensor = input_tensor
         self.body = NN_body
         self.TopLayer_obj = TopLayer_obj
-        output_layer = self.TopLayer_obj.add_layer_on_top(self.body, l2_penalty)
+        output_layer = self.TopLayer_obj.add_layer_on_top(self.body)
         self.model = Model(inputs=self.input_tensor, outputs=output_layer)
         self.model.summary()
         self.model.compile(optimizer=optimizer,

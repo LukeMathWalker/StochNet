@@ -69,7 +69,7 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
 
     sample_space_dimension = 1
 
-    def __init__(self, number_of_classes):
+    def __init__(self, number_of_classes, coeff_regularizer=None):
         # it calls the setter method implicitly
         self.number_of_classes = number_of_classes
 
@@ -88,7 +88,7 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
 
     def add_layer_on_top(self, base_model, l2_penalty=0):
         logits_on_top = Dense(self._number_of_classes,
-                              kernel_regularizer=regularizers.l2(l2_penalty),
+                              activity_regularizer=self.coeff_regularizer,
                               activation=None)(base_model)
         return logits_on_top
 
@@ -134,8 +134,10 @@ class MultivariateNormalDiagOutputLayer(RandomVariableOutputLayer):
             raise ValueError('''The sample space dimension for a multivariate normal variable needs to be at least two!''')
 
     def add_layer_on_top(self, base_model):
-        mu = Dense(self._sample_space_dimension, activation=None, activity_regularizer=self.mu_regularizer)(base_model)
-        diag = Dense(self._sample_space_dimension, activation=tf.exp, activity_regularizer=self.diag_regularizer)(base_model)
+        mu = Dense(self._sample_space_dimension, activation=None,
+                   activity_regularizer=self.mu_regularizer)(base_model)
+        diag = Dense(self._sample_space_dimension, activation=tf.exp,
+                     activity_regularizer=self.diag_regularizer)(base_model)
         return concatenate([mu, diag], axis=-1)
 
     def get_tensor_random_variable(self, NN_prediction):
@@ -335,9 +337,9 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
         for component in self.components:
             self.number_of_output_neurons += component.number_of_output_neurons
 
-    def add_layer_on_top(self, base_model, l2_penalty):
+    def add_layer_on_top(self, base_model):
         # list comprehension preserves the order of the original list.
-        categorical_layer = self.categorical.add_layer_on_top(base_model, l2_penalty)
+        categorical_layer = self.categorical.add_layer_on_top(base_model)
         components_layers = [component.add_layer_on_top(base_model) for component in self.components]
         mixture_layers = [categorical_layer] + components_layers
         return concatenate(mixture_layers, axis=-1)

@@ -121,7 +121,7 @@ def compute_histogram_distance(hist_explorer, SSA_hist_samples, NN_hist_samples,
         SSA_md_hist = get_histogram(SSA_hist_samples, hist_bounds, n_bins,
                                     len(hist_bounds), md_bin_measure)
         NN_md_hist = get_histogram(NN_hist_samples, hist_bounds, n_bins,
-                                   len(hist_bounds), md_bin_measure)
+                                   len(hist_bounds), md_bin_measur)
         md_hist_distance = histogram_distance(NN_md_hist, SSA_md_hist, md_bin_measure)
         hist_distance.append(md_hist_distance)
     return hist_distance
@@ -196,7 +196,8 @@ if __name__ == '__main__':
     CRN_module = import_module("stochnet.CRN_models." + model_name + '_py3')
     CRN_class = getattr(CRN_module, model_name)
 
-    steps = [1, 5]
+    #steps = [1, 5]
+    steps = [1]
     mean_train_hist_dist = evaluate_model_on_dataset(train_explorer, nb_past_timesteps,
                                                      NN, sess, model_id, CRN_class,
                                                      steps, plot=True,

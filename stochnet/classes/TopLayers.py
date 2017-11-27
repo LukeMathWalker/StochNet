@@ -3,6 +3,7 @@ import numpy as np
 import abc
 from keras.layers import Dense
 from keras.layers.merge import concatenate
+import keras.regularizers
 from stochnet.classes.Tensor_RandomVariables import Categorical, MultivariateNormalCholesky, MultivariateLogNormal, Mixture, MultivariateNormalDiag
 from stochnet.classes.Errors import ShapeError, DimensionError
 
@@ -85,8 +86,10 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
         else:
             raise ValueError('''We can't define a Categorical random variable is there isn't at least one class!''')
 
-    def add_layer_on_top(self, base_model):
-        logits_on_top = Dense(self._number_of_classes, activation=None)(base_model)
+    def add_layer_on_top(self, base_model, l2_penalty=0):
+        logits_on_top = Dense(self._number_of_classes,
+                              kernel_regularizer=regularizers.l2(l2_penalty),
+                              activation=None)(base_model)
         return logits_on_top
 
     def get_tensor_random_variable(self, NN_prediction):
@@ -332,9 +335,9 @@ class MixtureOutputLayer(RandomVariableOutputLayer):
         for component in self.components:
             self.number_of_output_neurons += component.number_of_output_neurons
 
-    def add_layer_on_top(self, base_model):
+    def add_layer_on_top(self, base_model, l2_penalty):
         # list comprehension preserves the order of the original list.
-        categorical_layer = self.categorical.add_layer_on_top(base_model)
+        categorical_layer = self.categorical.add_layer_on_top(base_model, l2_penalty)
         components_layers = [component.add_layer_on_top(base_model) for component in self.components]
         mixture_layers = [categorical_layer] + components_layers
         return concatenate(mixture_layers, axis=-1)

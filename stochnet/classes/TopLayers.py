@@ -86,7 +86,7 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
         else:
             raise ValueError('''We can't define a Categorical random variable is there isn't at least one class!''')
 
-    def add_layer_on_top(self, base_model, l2_penalty=0):
+    def add_layer_on_top(self, base_model):
         logits_on_top = Dense(self._number_of_classes,
                               activity_regularizer=self.coeff_regularizer,
                               activation=None)(base_model)
@@ -314,9 +314,9 @@ class MultivariateLogNormalOutputLayer(RandomVariableOutputLayer):
 
 class MixtureOutputLayer(RandomVariableOutputLayer):
 
-    def __init__(self, components):
+    def __init__(self, components, coeff_regularizer=None):
         self.number_of_components = len(components)
-        self.categorical = CategoricalOutputLayer(self.number_of_components)
+        self.categorical = CategoricalOutputLayer(self.number_of_components, coeff_regularizer)
         self.components = list(components)
         self.set_sample_space_dimension()
         self.set_number_of_output_neurons()

@@ -72,6 +72,7 @@ class CategoricalOutputLayer(RandomVariableOutputLayer):
     def __init__(self, number_of_classes, coeff_regularizer=None):
         # it calls the setter method implicitly
         self.number_of_classes = number_of_classes
+        self.coeff_regularizer = coeff_regularizer
 
     @property
     def number_of_classes(self):

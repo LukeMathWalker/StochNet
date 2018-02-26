@@ -7,3 +7,4 @@ class global_params(luigi.Config):
     endtime = luigi.FloatParameter()
     CRN_name = luigi.Parameter()
     nb_past_timesteps = luigi.IntParameter()
+    algorithm = luigi.FloatParameter()

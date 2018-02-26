@@ -1,5 +1,5 @@
 import luigi
-from luigi.contrib.external import ExternalPythonProgramTask
+from luigi.contrib.external_program import ExternalPythonProgramTask
 from luigi.util import inherits, requires
 from importlib import import_module
 from stochnet.utils.file_organization import ProjectFileExplorer

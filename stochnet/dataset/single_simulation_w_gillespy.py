@@ -33,8 +33,8 @@ if __name__ == '__main__':
     dataset_folder = str(sys.argv[4])
     model_name = str(sys.argv[5])
     prefix = str(sys.argv[6])
-    id_number = int(sys.argv[7])
-    algorithm = str(sys.argv[8])
+    algorithm = str(sys.argv[7])
+    id_number = int(sys.argv[8])
 
     CRN_module = import_module("stochnet.CRN_models." + model_name)
     CRN_class = getattr(CRN_module, model_name)

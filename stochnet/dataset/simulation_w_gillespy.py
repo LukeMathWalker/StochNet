@@ -34,11 +34,11 @@ def perform_simulations(model_name, nb_settings, nb_trajectories,
     )
     program_address = program_module.__file__
     cmd = (
-        "seq 0 {7} | rush \"python {0} {1} {2} {3} "
+        "seq 0 {8} | rush \"python {0} {1} {2} {3} "
         "\'{4}\' \'{5}\' \'{6}\' \'{7}\' {{}}\"".format(
             program_address, nb_trajectories, timestep,
             endtime, dataset_folder, model_name,
-            prefix, nb_settings, algorithm))
+            prefix, algorithm, nb_settings))
     subprocess.call(cmd, shell=True)
     return
 

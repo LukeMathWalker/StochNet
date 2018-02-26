@@ -8,7 +8,8 @@ from time import time
 
 def get_histogram_settings(nb_histogram_settings, x_fp):
     """
-    Randomly selects a subset of the x dataset to be used as initial setup
+    Randomly selects a subset of the x dataset
+    to be used as initial setup
     in the construction of the histogram dataset.
     """
     with open(x_fp, 'rb') as f:
@@ -31,31 +32,43 @@ if __name__ == '__main__':
     nb_trajectories = int(sys.argv[5])
     project_folder = str(sys.argv[6])
     model_name = str(sys.argv[7])
+    algorithm = str(sys.argv[8])
 
     project_explorer = ProjectFileExplorer(project_folder)
-    dataset_explorer = project_explorer.get_DatasetFileExplorer(timestep, dataset_id)
+    dataset_explorer = project_explorer.get_DatasetFileExplorer(timestep,
+                                                                dataset_id)
     endtime = (nb_past_timesteps + 10) * timestep
 
-    settings = get_histogram_settings(nb_histogram_settings, dataset_explorer.x_fp)
+    settings = get_histogram_settings(nb_histogram_settings,
+                                      dataset_explorer.x_fp)
     with open(dataset_explorer.histogram_settings_fp, 'wb') as f:
         np.save(f, settings)
 
     # TODO: remove this workaround
-    settings_fp = os.path.join(dataset_explorer.dataset_folder, 'settings.npy')
+    settings_fp = os.path.join(dataset_explorer.dataset_folder,
+                               'settings.npy')
     np.save(settings_fp, settings)
 
-    histogram_dataset = build_simulation_dataset(model_name, nb_histogram_settings, nb_trajectories,
-                                                 timestep, endtime,
-                                                 dataset_explorer.dataset_folder,
-                                                 prefix='histogram_partial_',
-                                                 how='stack')
+    histogram_dataset = build_simulation_dataset(
+        model_name, nb_histogram_settings, nb_trajectories,
+        timestep, endtime,
+        dataset_explorer.dataset_folder,
+        algorithm=algorithm,
+        prefix='histogram_partial_',
+        how='stack'
+    )
 
     with open(dataset_explorer.histogram_dataset_fp, 'wb') as f:
         np.save(f, histogram_dataset)
     end = time()
     execution_time = end - start
     with open(dataset_explorer.log_fp, 'a') as f:
-        f.write("Simulating {0} {1} histogram trajectories for {2} different settings took {3} seconds.\n".format(nb_trajectories,
-                                                                                                                  model_name,
-                                                                                                                  nb_histogram_settings,
-                                                                                                                  execution_time))
+        f.write("Simulating {0} {1} histogram trajectories "
+                "for {2} different settings using {3} "
+                "took {4} seconds.\n".format(
+                    nb_trajectories,
+                    model_name,
+                    nb_histogram_settings,
+                    algorithm,
+                    execution_time
+                ))

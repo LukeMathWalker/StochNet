@@ -8,3 +8,4 @@ class global_params(luigi.Config):
     CRN_name = luigi.Parameter()
     nb_past_timesteps = luigi.IntParameter()
     algorithm = luigi.Parameter()
+    random_seed = luigi.IntParameter()

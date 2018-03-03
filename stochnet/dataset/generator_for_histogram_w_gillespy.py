@@ -33,11 +33,14 @@ if __name__ == '__main__':
     project_folder = str(sys.argv[6])
     model_name = str(sys.argv[7])
     algorithm = str(sys.argv[8])
+    endtime = float(sys.argv[9])
+    random_seed = int(sys.argv[10])
+
+    np.random.seed(random_seed)
 
     project_explorer = ProjectFileExplorer(project_folder)
     dataset_explorer = project_explorer.get_DatasetFileExplorer(timestep,
                                                                 dataset_id)
-    endtime = (nb_past_timesteps + 10) * timestep
 
     settings = get_histogram_settings(nb_histogram_settings,
                                       dataset_explorer.x_fp)
@@ -64,11 +67,12 @@ if __name__ == '__main__':
     execution_time = end - start
     with open(dataset_explorer.log_fp, 'a') as f:
         f.write("Simulating {0} {1} histogram trajectories "
-                "for {2} different settings using {3} "
-                "took {4} seconds.\n".format(
+                "for {2} different settings until {3} using {4} "
+                "took {5} seconds.\n".format(
                     nb_trajectories,
                     model_name,
                     nb_histogram_settings,
+                    endtime,
                     algorithm,
                     execution_time
                 ))

@@ -63,6 +63,7 @@ class GenerateHistogramData(ExternalPythonProgramTask):
 
     nb_histogram_settings = luigi.IntParameter()
     nb_histogram_trajectories = luigi.IntParameter()
+    endtime = luigi.FloatParameter()
 
     virtualenv = get_python_2_env()
 
@@ -73,7 +74,8 @@ class GenerateHistogramData(ExternalPythonProgramTask):
         return ['python', program_address, self.timestep,
                 self.nb_past_timesteps, self.dataset_id,
                 self.nb_histogram_settings, self.nb_histogram_trajectories,
-                self.project_folder, self.CRN_name, self.algorithm]
+                self.project_folder, self.CRN_name, self.algorithm,
+                self.endtime, self.random_seed]
 
     def output(self):
         project_explorer = ProjectFileExplorer(self.project_folder)

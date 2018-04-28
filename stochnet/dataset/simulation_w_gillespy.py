@@ -38,7 +38,7 @@ def perform_simulations(model_name, nb_settings, nb_trajectories,
         "\'{4}\' \'{5}\' \'{6}\' \'{7}\' {{}}\"".format(
             program_address, nb_trajectories, timestep,
             endtime, dataset_folder, model_name,
-            prefix, algorithm, nb_settings))
+            prefix, algorithm, nb_settings-1))
     subprocess.call(cmd, shell=True)
     return
 

@@ -25,7 +25,7 @@ def load_NN(model_explorer):
 
 
 def evaluate_model_on_dataset(dataset_explorer, nb_past_timesteps, NN, sess,
-                              model_id, CRN_class, nb_steps, n_bins=200, plot=False,
+                              model_id, CRN_class, nb_steps, n_bins=100, plot=False,
                               log_results=False):
     hist_bounds = CRN_class.get_histogram_bounds()
     bin_lengths = [(b[1] - b[0]) / n_bins for b in hist_bounds]
@@ -196,12 +196,12 @@ if __name__ == '__main__':
     CRN_module = import_module("stochnet.CRN_models." + model_name + '_py3')
     CRN_class = getattr(CRN_module, model_name)
 
-    steps = [1, 5]
+    steps = [1, 5, 25]
     #steps = [5]
-    mean_train_hist_dist = evaluate_model_on_dataset(train_explorer, nb_past_timesteps,
-                                                     NN, sess, model_id, CRN_class,
-                                                     steps, plot=True,
-                                                     log_results=True)
+    # mean_train_hist_dist = evaluate_model_on_dataset(train_explorer, nb_past_timesteps,
+    #                                                  NN, sess, model_id, CRN_class,
+    #                                                  steps, plot=True,
+    #                                                  log_results=True)
     mean_val_hist_dist = evaluate_model_on_dataset(val_explorer, nb_past_timesteps,
                                                    NN, sess, model_id, CRN_class,
                                                    steps, plot=True,

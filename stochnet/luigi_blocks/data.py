@@ -71,8 +71,9 @@ class GenerateHistogramData(ExternalPythonProgramTask):
         program_module = import_module("stochnet.dataset."
                                        "generator_for_histogram_w_gillespy")
         program_address = program_module.__file__
-        return ['python', program_address, self.timestep,
+        return ['python', program_address, self.timestep, self.timestep,
                 self.nb_past_timesteps, self.dataset_id,
+                self.dataset_id,
                 self.nb_histogram_settings, self.nb_histogram_trajectories,
                 self.project_folder, self.CRN_name, self.algorithm,
                 self.endtime, self.random_seed]
